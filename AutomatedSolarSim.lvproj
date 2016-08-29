@@ -17,7 +17,6 @@
 		<Item Name="Add repeat light measurements to queue.vi" Type="VI" URL="../SubVIs/Add repeat light measurements to queue.vi"/>
 		<Item Name="Automated JV Measurement.vi" Type="VI" URL="../Automated JV Measurement.vi"/>
 		<Item Name="Build meas status string.vi" Type="VI" URL="../SubVIs/Build meas status string.vi"/>
-		<Item Name="Build queue_testing.vi" Type="VI" URL="../Testing and prelim/Build queue_testing.vi"/>
 		<Item Name="Calculate scan rate.vi" Type="VI" URL="../SubVIs/Calculate scan rate.vi"/>
 		<Item Name="Check Keithley is connected.vi" Type="VI" URL="../SubVIs/Check Keithley is connected.vi"/>
 		<Item Name="Check pcb cont is connected.vi" Type="VI" URL="../SubVIs/Check pcb cont is connected.vi"/>
@@ -46,7 +45,7 @@
 		<Item Name="Save scan settings.vi" Type="VI" URL="../SubVIs/Save scan settings.vi"/>
 		<Item Name="Save Stabilisation Data.vi" Type="VI" URL="../SubVIs/Save Stabilisation Data.vi"/>
 		<Item Name="Scan settings.ctl" Type="VI" URL="../TypeDefs/Scan settings.ctl"/>
-		<Item Name="Set pins on switch board.vi" Type="VI" URL="../../Automated Solar Sim/SubVIs/Set pins on switch board.vi"/>
+		<Item Name="Set pins on switch board.vi" Type="VI" URL="../SubVIs/Set pins on switch board.vi"/>
 		<Item Name="Settings Boolean.ctl" Type="VI" URL="../TypeDefs/Settings Boolean.ctl"/>
 		<Item Name="Sort scan settings.vi" Type="VI" URL="../SubVIs/Sort scan settings.vi"/>
 		<Item Name="State Enumerate Ring.ctl" Type="VI" URL="../TypeDefs/State Enumerate Ring.ctl"/>
@@ -58,7 +57,6 @@
 		<Item Name="Update Meas Type to Best MaxPowStab.vi" Type="VI" URL="../SubVIs/Update Meas Type to Best MaxPowStab.vi"/>
 		<Item Name="Update Meas Type to EQE.vi" Type="VI" URL="../SubVIs/Update Meas Type to EQE.vi"/>
 		<Item Name="Update Meas Type to Repeat JV Scan for best.vi" Type="VI" URL="../SubVIs/Update Meas Type to Repeat JV Scan for best.vi"/>
-		<Item Name="X-Y stage control3.vi" Type="VI" URL="../Testing and prelim/X-Y stage control3.vi"/>
 		<Item Name="Dependencies" Type="Dependencies">
 			<Item Name="vi.lib" Type="Folder">
 				<Item Name="BuildHelpPath.vi" Type="VI" URL="/&lt;vilib&gt;/Utility/error.llb/BuildHelpPath.vi"/>
@@ -110,7 +108,6 @@
 				<Item Name="NI_Gmath.lvlib" Type="Library" URL="/&lt;vilib&gt;/gmath/NI_Gmath.lvlib"/>
 				<Item Name="NI_PackedLibraryUtility.lvlib" Type="Library" URL="/&lt;vilib&gt;/Utility/LVLibp/NI_PackedLibraryUtility.lvlib"/>
 				<Item Name="Not Found Dialog.vi" Type="VI" URL="/&lt;vilib&gt;/Utility/error.llb/Not Found Dialog.vi"/>
-				<Item Name="null" Type="VI" URL="/&lt;vilib&gt;/ULx/null"/>
 				<Item Name="Open File+.vi" Type="VI" URL="/&lt;vilib&gt;/Utility/file.llb/Open File+.vi"/>
 				<Item Name="Read File+ (string).vi" Type="VI" URL="/&lt;vilib&gt;/Utility/file.llb/Read File+ (string).vi"/>
 				<Item Name="Read From Spreadsheet File (DBL).vi" Type="VI" URL="/&lt;vilib&gt;/Utility/file.llb/Read From Spreadsheet File (DBL).vi"/>
