@@ -18,6 +18,7 @@
 		<Item Name="Automated JV Measurement.vi" Type="VI" URL="../Automated JV Measurement.vi"/>
 		<Item Name="Build meas status string.vi" Type="VI" URL="../SubVIs/Build meas status string.vi"/>
 		<Item Name="Calculate scan rate.vi" Type="VI" URL="../SubVIs/Calculate scan rate.vi"/>
+		<Item Name="Check Arduino is connected.vi" Type="VI" URL="../SubVIs/Check Arduino is connected.vi"/>
 		<Item Name="Check Keithley is connected.vi" Type="VI" URL="../SubVIs/Check Keithley is connected.vi"/>
 		<Item Name="Check pcb cont is connected.vi" Type="VI" URL="../SubVIs/Check pcb cont is connected.vi"/>
 		<Item Name="Check stage contr is connected.vi" Type="VI" URL="../SubVIs/Check stage contr is connected.vi"/>
