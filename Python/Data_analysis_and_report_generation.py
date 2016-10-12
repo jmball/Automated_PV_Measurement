@@ -11,8 +11,8 @@ from scipy import signal
 
 # Choose folder containing data and log file path. Remember to use all forward
 # slashes
-folderpath = r'C:/SolarSimData/James B/2016/08-Aug/01-08-2016 Test 6/'
-filepath = r'TEST 6_LOG.txt'
+folderpath = r'C:/SolarSimData/James B/2016/09-Sep/9-18-2016 Inverted Optimisation Batch 4-5/'
+filepath = r'INVERTED OPTIMISATION BATCH 4-5_LOG.txt'
 log_file = folderpath + filepath
 
 # Create pdf for adding figures
@@ -155,8 +155,10 @@ boxprops = dict(color='black')
 whiskerprops = dict(color='black', linestyle='-')
 
 # Scale figures to a landscape A4 page in inches
-A4_height = 8.27
-A4_width = 11.69
+# A4_height = 8.27
+# A4_width = 11.69
+A4_height = 7.5
+A4_width = 10
 
 # Iterate through the lists of grouped data to produce boxplots. Each plot
 # will contain all data from all values of a variable including a 'Control'
@@ -282,12 +284,14 @@ labels = list(substrates['Label'])
 
 # create main figure
 plt.figure(figsize=(A4_width, A4_height), dpi=300)
-plt.suptitle('JV scans of every working pixel', fontsize=14, fontweight='bold')
+plt.suptitle('JV scans of every working pixel', fontsize=10, fontweight='bold')
 i = 1
 for name, group in grouped_by_label:
     plt.subplot(subplot_rows, subplot_cols, i)
     plt.axhline(0, lw=0.5, c='black')
-    plt.title(labels[i - 1] + ', ' + variables[i - 1] + ', ' + values[i - 1])
+    plt.title(
+        str(labels[i - 1] + ', ' + variables[i - 1] + ', ' + values[i - 1]),
+        fontsize=8)
 
     c_div = 1 / len(group)
     j = 0
@@ -317,10 +321,12 @@ for name, group in grouped_by_label:
 
         j += 1
 
-    plt.xlabel('Applied bias (V)')
-    plt.ylabel('J (mA/cm^2)')
+    plt.xlabel('Applied bias (V)', fontsize=7)
+    plt.xticks(fontsize=7)
+    plt.ylabel('J (mA/cm^2)', fontsize=7)
+    plt.yticks(fontsize=7)
     plt.ylim([-max_group_jsc * 1.1, max_group_jsc * 1.1])
-    plt.legend(loc='best', prop={'size': 8})
+    plt.legend(loc='best', prop={'size': 6})
 
     i += 1
 
@@ -347,7 +353,7 @@ jscs = list(best_pixels['Jsc'])
 
 # create main figure
 plt.figure(figsize=(A4_width, A4_height), dpi=300)
-plt.suptitle('Best pixels', fontsize=14, fontweight='bold')
+plt.suptitle('Best pixels', fontsize=10, fontweight='bold')
 
 # initialise index for subplot and start looping through best cells dataframe
 i = 1
@@ -391,7 +397,7 @@ for file in best_pixels['File Path']:
 
     plt.subplot(subplot_rows, subplot_cols, i)
     plt.axhline(0, lw=0.5, c='black')
-    plt.title(variables[i - 1] + ', ' + values[i - 1])
+    plt.title(str(variables[i - 1] + ', ' + values[i - 1]), fontsize=8)
     plt.plot(JV_light_LH_data[:, 0],
              JV_light_LH_data[:, 1],
              label='l f->s',
@@ -415,11 +421,12 @@ for file in best_pixels['File Path']:
                  lw=2.0)
     except NameError:
         pass
-    plt.xlabel('Applied bias (V)')
-    plt.ylabel('J (mA/cm^2)')
-
+    plt.xlabel('Applied bias (V)', fontsize=7)
+    plt.xticks(fontsize=7)
+    plt.ylabel('J (mA/cm^2)', fontsize=7)
+    plt.yticks(fontsize=7)
     plt.ylim([-jscs[i - 1] * 1.1, jscs[i - 1] * 1.1])
-    plt.legend(loc='best', prop={'size': 9})
+    plt.legend(loc='best', prop={'size': 6})
 
     i += 1
 
