@@ -42,6 +42,7 @@
 		<Item Name="Measure Jt curve.vi" Type="VI" URL="../SubVIs/Measure Jt curve.vi"/>
 		<Item Name="Measure JV curve.vi" Type="VI" URL="../SubVIs/Measure JV curve.vi"/>
 		<Item Name="Measure MaxPStabilisation.vi" Type="VI" URL="../SubVIs/Measure MaxPStabilisation.vi"/>
+		<Item Name="MeasureFilterIntensities.vi" Type="VI" URL="../SubVIs/MeasureFilterIntensities.vi"/>
 		<Item Name="NPLC for JV scan.ctl" Type="VI" URL="../TypeDefs/NPLC for JV scan.ctl"/>
 		<Item Name="Save scan settings.vi" Type="VI" URL="../SubVIs/Save scan settings.vi"/>
 		<Item Name="Save Stabilisation Data.vi" Type="VI" URL="../SubVIs/Save Stabilisation Data.vi"/>
