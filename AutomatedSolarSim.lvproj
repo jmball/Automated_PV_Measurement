@@ -22,6 +22,8 @@
 		<Item Name="Check Keithley is connected.vi" Type="VI" URL="../SubVIs/Check Keithley is connected.vi"/>
 		<Item Name="Check pcb cont is connected.vi" Type="VI" URL="../SubVIs/Check pcb cont is connected.vi"/>
 		<Item Name="Check stage contr is connected.vi" Type="VI" URL="../SubVIs/Check stage contr is connected.vi"/>
+		<Item Name="Create Intensity Dep folder.vi" Type="VI" URL="../SubVIs/Create Intensity Dep folder.vi"/>
+		<Item Name="Create JV folder.vi" Type="VI" URL="../SubVIs/Create JV folder.vi"/>
 		<Item Name="Create Max Power Stab folder.vi" Type="VI" URL="../SubVIs/Create Max Power Stab folder.vi"/>
 		<Item Name="Delete scan settings.vi" Type="VI" URL="../SubVIs/Delete scan settings.vi"/>
 		<Item Name="Disable and grey out controls.vi" Type="VI" URL="../../Solar_Cell_Stability/VIs/subvis/Disable and grey out controls.vi"/>
@@ -132,6 +134,7 @@
 				<Item Name="NI_Gmath.lvlib" Type="Library" URL="/&lt;vilib&gt;/gmath/NI_Gmath.lvlib"/>
 				<Item Name="NI_PackedLibraryUtility.lvlib" Type="Library" URL="/&lt;vilib&gt;/Utility/LVLibp/NI_PackedLibraryUtility.lvlib"/>
 				<Item Name="Not Found Dialog.vi" Type="VI" URL="/&lt;vilib&gt;/Utility/error.llb/Not Found Dialog.vi"/>
+				<Item Name="null" Type="VI" URL="/&lt;vilib&gt;/ULx/null"/>
 				<Item Name="Open File+.vi" Type="VI" URL="/&lt;vilib&gt;/Utility/file.llb/Open File+.vi"/>
 				<Item Name="Read File+ (string).vi" Type="VI" URL="/&lt;vilib&gt;/Utility/file.llb/Read File+ (string).vi"/>
 				<Item Name="Read From Spreadsheet File (DBL).vi" Type="VI" URL="/&lt;vilib&gt;/Utility/file.llb/Read From Spreadsheet File (DBL).vi"/>
