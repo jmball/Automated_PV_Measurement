@@ -4,8 +4,8 @@ import numpy as np
 import pyvisa
 
 # Filepath for saving data
-folderpath = r'C:/SolarSimData/James B/2016/08-Aug/01-08-2016 Build test/Max P Stabilisation/A6_3_Light_scan0_MaxPStab.txt'
-filename = r''
+folderpath = r'C:/SolarSimData/James B/2016/11-Nov/01-11-2016 Manual test2/Max P Stabilisation/'
+filename = r'x_1_Light_scan0_MaxPStab.txt'
 
 # Assign the VISA resource to a variable
 rm = pyvisa.ResourceManager()
@@ -18,12 +18,12 @@ keithley2400.encoding = 'latin-1'
 V_range = 2  # voltage range
 I_range = 0.1  # current range
 compliance_I = 0.1  # compliance level
-initial_V = 0.476000  # initial Vmp
+initial_V = 0.644000  # initial Vmp
 nplc = 0.01  # integration filter number of power-line cycles
 delay = 0  # source delay in seconds
 t_track = 30.000000  # time in seconds to track max power for
 area = 0.093500  # pixel area in cm^2
-suns = 1.009935  # no of suns
+suns = 1  # no of suns
 
 # Initialise Keithley
 keithley2400.write('OUTP OFF')  # Disable the output
