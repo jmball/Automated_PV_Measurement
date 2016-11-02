@@ -47,6 +47,7 @@
 		<Item Name="Measure MaxPStabilisation.vi" Type="VI" URL="../SubVIs/Measure MaxPStabilisation.vi"/>
 		<Item Name="MeasureFilterIntensities.vi" Type="VI" URL="../SubVIs/MeasureFilterIntensities.vi"/>
 		<Item Name="NPLC for JV scan.ctl" Type="VI" URL="../TypeDefs/NPLC for JV scan.ctl"/>
+		<Item Name="Remove_EQE_and_Indep_if_manual.vi" Type="VI" URL="../SubVIs/Remove_EQE_and_Indep_if_manual.vi"/>
 		<Item Name="Save scan settings.vi" Type="VI" URL="../SubVIs/Save scan settings.vi"/>
 		<Item Name="Save Stabilisation Data.vi" Type="VI" URL="../SubVIs/Save Stabilisation Data.vi"/>
 		<Item Name="Scan settings.ctl" Type="VI" URL="../TypeDefs/Scan settings.ctl"/>
