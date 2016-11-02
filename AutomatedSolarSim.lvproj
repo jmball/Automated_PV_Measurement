@@ -33,6 +33,7 @@
 		<Item Name="Find best pixel from log file.vi" Type="VI" URL="../SubVIs/Find best pixel from log file.vi"/>
 		<Item Name="Find max power voltage from log file.vi" Type="VI" URL="../SubVIs/Find max power voltage from log file.vi"/>
 		<Item Name="Format Max P Stabil data for plot.vi" Type="VI" URL="../SubVIs/Format Max P Stabil data for plot.vi"/>
+		<Item Name="Generate report control.ctl" Type="VI" URL="../SubVIs/Generate report control.ctl"/>
 		<Item Name="Generate voltage lists.vi" Type="VI" URL="../../J-V Measurement/Subvi/Generate voltage lists.vi"/>
 		<Item Name="Get filter wheel settings.vi" Type="VI" URL="../SubVIs/Get filter wheel settings.vi"/>
 		<Item Name="JV Data analysis from master log file.vi" Type="VI" URL="../SubVIs/JV Data analysis from master log file.vi"/>
