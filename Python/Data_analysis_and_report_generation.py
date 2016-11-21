@@ -290,7 +290,8 @@ for name, group in grouped_by_label:
     plt.subplot(subplot_rows, subplot_cols, i)
     plt.axhline(0, lw=0.5, c='black')
     plt.title(
-        str(labels[i - 1] + ', ' + variables[i - 1] + ', ' + values[i - 1]),
+        str(labels[i - 1]) + ', ' + str(variables[i - 1]) + ', ' +
+        str(values[i - 1]),
         fontsize=8)
 
     c_div = 1 / len(group)
