@@ -379,27 +379,27 @@
 				<Property Name="TgtF_targetfileGUID" Type="Str">{1554B717-9B6C-4835-B385-35C66BDF09D2}</Property>
 				<Property Name="TgtF_targetfileName" Type="Str">Automated PV Measurement_v2.0.exe</Property>
 			</Item>
-			<Item Name="Automated PV Measurement v2.1.2" Type="EXE">
+			<Item Name="Automated PV Measurement v2.1.3" Type="EXE">
 				<Property Name="App_copyErrors" Type="Bool">true</Property>
 				<Property Name="App_INI_aliasGUID" Type="Str">{05D4B823-5183-494D-A4B6-4194B1A3FBD5}</Property>
 				<Property Name="App_INI_GUID" Type="Str">{83079F92-76F1-4213-8422-CD470FEE9F49}</Property>
 				<Property Name="Bld_buildCacheID" Type="Str">{B0D3DA73-393F-4BEC-B4E4-932AF229A9C4}</Property>
-				<Property Name="Bld_buildSpecName" Type="Str">Automated PV Measurement v2.1.2</Property>
+				<Property Name="Bld_buildSpecName" Type="Str">Automated PV Measurement v2.1.3</Property>
 				<Property Name="Bld_compilerOptLevel" Type="Int">0</Property>
 				<Property Name="Bld_excludeLibraryItems" Type="Bool">true</Property>
 				<Property Name="Bld_excludePolymorphicVIs" Type="Bool">true</Property>
-				<Property Name="Bld_localDestDir" Type="Path">../Automated_PV_Measurement/builds/Automated PV Measurement v2.1.2</Property>
+				<Property Name="Bld_localDestDir" Type="Path">../Automated_PV_Measurement/builds/Automated PV Measurement v2.1.3</Property>
 				<Property Name="Bld_localDestDirType" Type="Str">relativeToCommon</Property>
 				<Property Name="Bld_modifyLibraryFile" Type="Bool">true</Property>
 				<Property Name="Bld_previewCacheID" Type="Str">{CE5D3E30-9F6B-4248-BD9A-2F8A1285AFCC}</Property>
-				<Property Name="Destination[0].destName" Type="Str">Automated PV Measurement v2.1.2.exe</Property>
-				<Property Name="Destination[0].path" Type="Path">../Automated_PV_Measurement/builds/Automated PV Measurement v2.1.2/Automated PV Measurement v2.1.2.exe</Property>
+				<Property Name="Destination[0].destName" Type="Str">Automated PV Measurement v2.1.3.exe</Property>
+				<Property Name="Destination[0].path" Type="Path">../Automated_PV_Measurement/builds/Automated PV Measurement v2.1.3/Automated PV Measurement v2.1.3.exe</Property>
 				<Property Name="Destination[0].preserveHierarchy" Type="Bool">true</Property>
 				<Property Name="Destination[0].type" Type="Str">App</Property>
 				<Property Name="Destination[1].destName" Type="Str">Support Directory</Property>
-				<Property Name="Destination[1].path" Type="Path">../Automated_PV_Measurement/builds/Automated PV Measurement v2.1.2/data</Property>
+				<Property Name="Destination[1].path" Type="Path">../Automated_PV_Measurement/builds/Automated PV Measurement v2.1.3/data</Property>
 				<Property Name="DestinationCount" Type="Int">2</Property>
-				<Property Name="Source[0].itemID" Type="Str">{BE456BEC-33B9-4007-89D3-1444C9D3D748}</Property>
+				<Property Name="Source[0].itemID" Type="Str">{2DD04DD9-6D9C-4EA8-A553-612E3912007D}</Property>
 				<Property Name="Source[0].type" Type="Str">Container</Property>
 				<Property Name="Source[1].destinationIndex" Type="Int">0</Property>
 				<Property Name="Source[1].itemID" Type="Ref">/My Computer/Automated JV Measurement.vi</Property>
@@ -468,12 +468,12 @@
 				<Property Name="TgtF_fileDescription" Type="Str">Automated PV Measurement</Property>
 				<Property Name="TgtF_fileVersion.major" Type="Int">2</Property>
 				<Property Name="TgtF_fileVersion.minor" Type="Int">1</Property>
-				<Property Name="TgtF_fileVersion.patch" Type="Int">2</Property>
+				<Property Name="TgtF_fileVersion.patch" Type="Int">3</Property>
 				<Property Name="TgtF_internalName" Type="Str">Automated PV Measurement</Property>
 				<Property Name="TgtF_legalCopyright" Type="Str">Copyright © 2016 Istituto Italiano di Tecnologia</Property>
 				<Property Name="TgtF_productName" Type="Str">Automated PV Measurement</Property>
 				<Property Name="TgtF_targetfileGUID" Type="Str">{DE62D59D-FAD5-4EBB-9D75-1653E941F304}</Property>
-				<Property Name="TgtF_targetfileName" Type="Str">Automated PV Measurement v2.1.2.exe</Property>
+				<Property Name="TgtF_targetfileName" Type="Str">Automated PV Measurement v2.1.3.exe</Property>
 			</Item>
 			<Item Name="Automated Solar Sim" Type="EXE">
 				<Property Name="App_copyErrors" Type="Bool">true</Property>
