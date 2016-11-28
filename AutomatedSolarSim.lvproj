@@ -22,6 +22,7 @@
 		<Item Name="Check Keithley is connected.vi" Type="VI" URL="../SubVIs/Check Keithley is connected.vi"/>
 		<Item Name="Check pcb cont is connected.vi" Type="VI" URL="../SubVIs/Check pcb cont is connected.vi"/>
 		<Item Name="Check stage contr is connected.vi" Type="VI" URL="../SubVIs/Check stage contr is connected.vi"/>
+		<Item Name="Close EQE.vi" Type="VI" URL="../SubVIs/Close EQE.vi"/>
 		<Item Name="Create Intensity Dep folder.vi" Type="VI" URL="../SubVIs/Create Intensity Dep folder.vi"/>
 		<Item Name="Create JV folder.vi" Type="VI" URL="../SubVIs/Create JV folder.vi"/>
 		<Item Name="Create Max Power Stab folder.vi" Type="VI" URL="../SubVIs/Create Max Power Stab folder.vi"/>
@@ -41,6 +42,7 @@
 		<Item Name="Keithley J-t IIT_v2.vi" Type="VI" URL="../SubVIs/Keithley J-t IIT_v2.vi"/>
 		<Item Name="Load saved scan settings_arbitray cluster elements.vi" Type="VI" URL="../SubVIs/Load saved scan settings_arbitray cluster elements.vi"/>
 		<Item Name="Measure EQE.vi" Type="VI" URL="../SubVIs/Measure EQE.vi"/>
+		<Item Name="Measure EQE_v2.vi" Type="VI" URL="../SubVIs/Measure EQE_v2.vi"/>
 		<Item Name="Measure Intensity Dep.vi" Type="VI" URL="../SubVIs/Measure Intensity Dep.vi"/>
 		<Item Name="Measure Jt curve.vi" Type="VI" URL="../SubVIs/Measure Jt curve.vi"/>
 		<Item Name="Measure JV curve.vi" Type="VI" URL="../SubVIs/Measure JV curve.vi"/>
@@ -53,6 +55,7 @@
 		<Item Name="Scan settings.ctl" Type="VI" URL="../TypeDefs/Scan settings.ctl"/>
 		<Item Name="Set pins on switch board.vi" Type="VI" URL="../SubVIs/Set pins on switch board.vi"/>
 		<Item Name="Settings Boolean.ctl" Type="VI" URL="../TypeDefs/Settings Boolean.ctl"/>
+		<Item Name="Setup EQE.vi" Type="VI" URL="../SubVIs/Setup EQE.vi"/>
 		<Item Name="Sort scan settings.vi" Type="VI" URL="../SubVIs/Sort scan settings.vi"/>
 		<Item Name="State Enumerate Ring.ctl" Type="VI" URL="../TypeDefs/State Enumerate Ring.ctl"/>
 		<Item Name="Time left Calculator.vi" Type="VI" URL="../SubVIs/Time left Calculator.vi"/>

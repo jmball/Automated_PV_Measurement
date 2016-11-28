@@ -8,3 +8,8 @@ Sleep(100)
 MouseClick("primary", 30, 260, 1); click "Exit"
 WinWaitActive("Save Tracq32 Setup")
 MouseClick("primary", 815, 510, 1); click "No"
+Sleep(100)
+
+;Make Automated PV Meas active
+WinActivate("Automated JV Measurement.vi")
+WinWaitActive("Automated JV Measurement.vi")
