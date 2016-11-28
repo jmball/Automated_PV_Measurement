@@ -402,7 +402,7 @@
 				<Property Name="Destination[1].destName" Type="Str">Support Directory</Property>
 				<Property Name="Destination[1].path" Type="Path">../Automated_PV_Measurement/builds/Automated PV Measurement v2.1.4/data</Property>
 				<Property Name="DestinationCount" Type="Int">2</Property>
-				<Property Name="Source[0].itemID" Type="Str">{740729B2-DE33-471A-932B-A84BEBBB65DC}</Property>
+				<Property Name="Source[0].itemID" Type="Str">{76588C75-3C1F-446A-8083-4D950D1E7AB8}</Property>
 				<Property Name="Source[0].type" Type="Str">Container</Property>
 				<Property Name="Source[1].destinationIndex" Type="Int">0</Property>
 				<Property Name="Source[1].itemID" Type="Ref">/My Computer/Automated JV Measurement.vi</Property>
@@ -469,6 +469,7 @@
 				<Property Name="SourceCount" Type="Int">3</Property>
 				<Property Name="TgtF_companyName" Type="Str">Istituto Italiano di Tecnologia</Property>
 				<Property Name="TgtF_fileDescription" Type="Str">Automated PV Measurement</Property>
+				<Property Name="TgtF_fileVersion.build" Type="Int">1</Property>
 				<Property Name="TgtF_fileVersion.major" Type="Int">2</Property>
 				<Property Name="TgtF_fileVersion.minor" Type="Int">1</Property>
 				<Property Name="TgtF_fileVersion.patch" Type="Int">4</Property>
