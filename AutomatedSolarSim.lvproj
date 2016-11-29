@@ -23,6 +23,7 @@
 		<Item Name="Check pcb cont is connected.vi" Type="VI" URL="../SubVIs/Check pcb cont is connected.vi"/>
 		<Item Name="Check stage contr is connected.vi" Type="VI" URL="../SubVIs/Check stage contr is connected.vi"/>
 		<Item Name="Close EQE.vi" Type="VI" URL="../SubVIs/Close EQE.vi"/>
+		<Item Name="CloseEQE_ActiveX.vi" Type="VI" URL="../SubVIs/CloseEQE_ActiveX.vi"/>
 		<Item Name="Create Intensity Dep folder.vi" Type="VI" URL="../SubVIs/Create Intensity Dep folder.vi"/>
 		<Item Name="Create JV folder.vi" Type="VI" URL="../SubVIs/Create JV folder.vi"/>
 		<Item Name="Create Max Power Stab folder.vi" Type="VI" URL="../SubVIs/Create Max Power Stab folder.vi"/>
@@ -47,6 +48,7 @@
 		<Item Name="Measure Jt curve.vi" Type="VI" URL="../SubVIs/Measure Jt curve.vi"/>
 		<Item Name="Measure JV curve.vi" Type="VI" URL="../SubVIs/Measure JV curve.vi"/>
 		<Item Name="Measure MaxPStabilisation.vi" Type="VI" URL="../SubVIs/Measure MaxPStabilisation.vi"/>
+		<Item Name="MeasureEQE_ActiveX.vi" Type="VI" URL="../SubVIs/MeasureEQE_ActiveX.vi"/>
 		<Item Name="MeasureFilterIntensities.vi" Type="VI" URL="../SubVIs/MeasureFilterIntensities.vi"/>
 		<Item Name="NPLC for JV scan.ctl" Type="VI" URL="../TypeDefs/NPLC for JV scan.ctl"/>
 		<Item Name="Remove_EQE_and_Indep_if_manual.vi" Type="VI" URL="../SubVIs/Remove_EQE_and_Indep_if_manual.vi"/>
@@ -56,6 +58,7 @@
 		<Item Name="Set pins on switch board.vi" Type="VI" URL="../SubVIs/Set pins on switch board.vi"/>
 		<Item Name="Settings Boolean.ctl" Type="VI" URL="../TypeDefs/Settings Boolean.ctl"/>
 		<Item Name="Setup EQE.vi" Type="VI" URL="../SubVIs/Setup EQE.vi"/>
+		<Item Name="SetupEQE_ActiveX.vi" Type="VI" URL="../SubVIs/SetupEQE_ActiveX.vi"/>
 		<Item Name="Sort scan settings.vi" Type="VI" URL="../SubVIs/Sort scan settings.vi"/>
 		<Item Name="State Enumerate Ring.ctl" Type="VI" URL="../TypeDefs/State Enumerate Ring.ctl"/>
 		<Item Name="Time left Calculator.vi" Type="VI" URL="../SubVIs/Time left Calculator.vi"/>
@@ -402,7 +405,7 @@
 				<Property Name="Destination[1].destName" Type="Str">Support Directory</Property>
 				<Property Name="Destination[1].path" Type="Path">../Automated_PV_Measurement/builds/Automated PV Measurement v2.1.4/data</Property>
 				<Property Name="DestinationCount" Type="Int">2</Property>
-				<Property Name="Source[0].itemID" Type="Str">{EB8BC1DB-A9A7-4527-AB68-A956A7CC25C5}</Property>
+				<Property Name="Source[0].itemID" Type="Str">{E625F015-926A-4130-B44F-C1B1000C4741}</Property>
 				<Property Name="Source[0].type" Type="Str">Container</Property>
 				<Property Name="Source[1].destinationIndex" Type="Int">0</Property>
 				<Property Name="Source[1].itemID" Type="Ref">/My Computer/Automated JV Measurement.vi</Property>
@@ -469,7 +472,7 @@
 				<Property Name="SourceCount" Type="Int">3</Property>
 				<Property Name="TgtF_companyName" Type="Str">Istituto Italiano di Tecnologia</Property>
 				<Property Name="TgtF_fileDescription" Type="Str">Automated PV Measurement</Property>
-				<Property Name="TgtF_fileVersion.build" Type="Int">4</Property>
+				<Property Name="TgtF_fileVersion.build" Type="Int">5</Property>
 				<Property Name="TgtF_fileVersion.major" Type="Int">2</Property>
 				<Property Name="TgtF_fileVersion.minor" Type="Int">1</Property>
 				<Property Name="TgtF_fileVersion.patch" Type="Int">4</Property>

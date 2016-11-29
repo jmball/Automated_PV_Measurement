@@ -93,7 +93,7 @@ WinWaitActive("Newport Oriel Tracq Basic Version 6.2")
 
 ;Clear Graph
 MouseClick("primary", 1060, 115, 1); click "Clear Graph"
-WinWaitActive("Newport Oriel Tracq Basic Version 6.2")
+;WinWaitActive("Newport Oriel Tracq Basic Version 6.2")
 
 ;Make Automated PV Meas active
 WinActivate("Automated JV Measurement.vi")
