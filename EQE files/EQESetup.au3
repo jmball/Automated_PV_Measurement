@@ -1,6 +1,7 @@
 ;Start Program
-Run("C:\Program Files\TRACQ BASIC.exe")
-Sleep(19000)
+;Run("C:\Program Files\TRACQ BASIC.exe")
+;Sleep(19000)
+WinActivate("Newport Oriel Tracq Basic Version 6.2")
 WinWaitActive("Newport Oriel Tracq Basic Version 6.2")
 
 ;Set detector calibration file

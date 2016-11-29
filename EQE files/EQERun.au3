@@ -1,7 +1,7 @@
 ;Start Program
-Run("C:\Program Files\TRACQ BASIC.exe")
-Sleep(19000)
-WinWaitActive("Newport Oriel Tracq Basic Version 6.2")
+;Run("C:\Program Files\TRACQ BASIC.exe")
+;Sleep(19000)
+;WinWaitActive("Newport Oriel Tracq Basic Version 6.2")
 
 ;Set detector calibration file
 ;MouseClick("primary", 250, 40, 1); click "Detector"
@@ -22,16 +22,16 @@ WinWaitActive("Newport Oriel Tracq Basic Version 6.2")
 ;WinWaitActive("Newport Oriel Tracq Basic Version 6.2")
 
 ;Set preamp settings
-MouseClick("primary", 250, 40, 1); click "Detector"
-Sleep(100)
-MouseClick("primary", 275, 125, 1); click "QE setup"
-WinWaitActive("Merlin Setup")
-MouseClickDrag("primary", 770, 410, 725, 410); highlight "G preamp"
-Send("10000"); set to 10000
-MouseClickDrag("primary", 770, 485, 725, 485); highlight "G ref"
-Send("10000"); set to 10000
-MouseClick("primary", 1015, 395, 1); click "Save new parameters"
-WinWaitActive("Newport Oriel Tracq Basic Version 6.2")
+;MouseClick("primary", 250, 40, 1); click "Detector"
+;Sleep(100)
+;MouseClick("primary", 275, 125, 1); click "QE setup"
+;WinWaitActive("Merlin Setup")
+;MouseClickDrag("primary", 770, 410, 725, 410); highlight "G preamp"
+;Send("10000"); set to 10000
+;MouseClickDrag("primary", 770, 485, 725, 485); highlight "G ref"
+;Send("10000"); set to 10000
+;MouseClick("primary", 1015, 395, 1); click "Save new parameters"
+;WinWaitActive("Newport Oriel Tracq Basic Version 6.2")
 
 ;Make Tracq active window
 WinActivate("Newport Oriel Tracq Basic Version 6.2")
@@ -100,17 +100,17 @@ WinActivate("Automated JV Measurement.vi")
 WinWaitActive("Automated JV Measurement.vi")
 
 ;Make Tracq active window
-WinActivate("Newport Oriel Tracq Basic Version 6.2")
-WinWaitActive("Newport Oriel Tracq Basic Version 6.2")
+;WinActivate("Newport Oriel Tracq Basic Version 6.2")
+;WinWaitActive("Newport Oriel Tracq Basic Version 6.2")
 
 ;Close Tracq
-MouseClick("primary", 15, 40, 1); click "File"
-Sleep(100)
-MouseClick("primary", 30, 260, 1); click "Exit"
-WinWaitActive("Save Tracq32 Setup")
-MouseClick("primary", 815, 510, 1); click "No"
-Sleep(100)
+;MouseClick("primary", 15, 40, 1); click "File"
+;Sleep(100)
+;MouseClick("primary", 30, 260, 1); click "Exit"
+;WinWaitActive("Save Tracq32 Setup")
+;MouseClick("primary", 815, 510, 1); click "No"
+;Sleep(100)
 
 ;Make Automated PV Meas active
-WinActivate("Automated JV Measurement.vi")
-WinWaitActive("Automated JV Measurement.vi")
+;WinActivate("Automated JV Measurement.vi")
+;WinWaitActive("Automated JV Measurement.vi")
