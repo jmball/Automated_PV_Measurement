@@ -472,7 +472,7 @@
 				<Property Name="SourceCount" Type="Int">3</Property>
 				<Property Name="TgtF_companyName" Type="Str">Istituto Italiano di Tecnologia</Property>
 				<Property Name="TgtF_fileDescription" Type="Str">Automated PV Measurement</Property>
-				<Property Name="TgtF_fileVersion.build" Type="Int">10</Property>
+				<Property Name="TgtF_fileVersion.build" Type="Int">11</Property>
 				<Property Name="TgtF_fileVersion.major" Type="Int">2</Property>
 				<Property Name="TgtF_fileVersion.minor" Type="Int">1</Property>
 				<Property Name="TgtF_fileVersion.patch" Type="Int">4</Property>
