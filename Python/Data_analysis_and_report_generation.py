@@ -7,9 +7,11 @@ from functools import reduce
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scipy as sp
 from matplotlib import gridspec
 from matplotlib.backends.backend_pdf import PdfPages
 from scipy import signal
+from scipy.stats import linregress
 
 # Choose folder containing data and log file path. Remember to use all forward
 # slashes
@@ -28,6 +30,11 @@ folderpath_split = folderpath.split('/')
 username = folderpath_split[2]
 date = folderpath_split[5][0:9]
 experiment_title = folderpath_split[5][11:-1]
+
+# Set physical constants
+kB = 1.38065e-23
+q = 1.60218e-19
+T = 300
 
 # Create pdf for adding figures
 pp = PdfPages(log_file_jv.replace('.txt', '_summary.pdf'))
@@ -333,11 +340,14 @@ def subboxplot(boxplotdata_HL, boxplotdata_LH, p, unit, i):
     plt.scatter(x,
                 np.concatenate(boxplotdata_HL[p + '_var'][i]),
                 c='blue',
-                marker='x')
+                marker='x',
+                label='H->L')
     plt.scatter(x,
                 np.concatenate(boxplotdata_LH[p + '_var'][i]),
                 c='red',
-                marker='x')
+                marker='x',
+                label='L->H')
+    plt.legend(loc='lower right', scatterpoints=1, fontsize=7)
     if p == 'FF':
         plt.ylim([0, 1])
     elif (p == 'Rs') or (p == 'Rsh'):
@@ -681,6 +691,18 @@ def factors(n):
     return set(reduce(list.__add__, pairs))
 
 
+# Function for rounding a number to given number of significant figures.
+def round_sig_fig(x, sf):
+    """
+
+    Rounds any number, x, to the specified number of significant figures, sf.
+
+    """
+    format_str = '%.' + str(sf) + 'e'
+    x_dig, x_ord = map(float, (format_str % x).split('e'))
+    return round(x, int(-x_ord) + 1)
+
+
 # Function for calculting the tick positions for a plot axis.
 def calc_ticks(data_min, data_max):
     """
@@ -850,6 +872,161 @@ if maxp_files['exists']:
                 j) + '.png'))
             pp.savefig()
         i += 1
+
+# Plot inensity dependent graphs if experiment data exists
+if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
+    data = pd.read_csv(folderpath + folderpath_intensity + filepath_jv,
+                       delimiter='\t',
+                       header=0,
+                       names=['Label', 'Pixel', 'Condition', 'Variable',
+                              'Value', 'Position', 'Jsc', 'Voc', 'PCE', 'FF',
+                              'Area', 'Stabil_Level', 'Stabil_time',
+                              'Meas_delay', 'Vmp', 'File_Path', 'Scan_rate',
+                              'Scan_direction', 'Intensity'])
+    sorted_data = data.sort_values(['Label', 'Pixel', 'Intensity', 'PCE'],
+                                   ascending=[True, True, True, False])
+    filtered_data_HL = sorted_data[(sorted_data.Scan_direction == 'HL')]
+    filtered_data_LH = sorted_data[(sorted_data.Scan_direction == 'LH')]
+    filtered_data_HL = filtered_data_HL.drop_duplicates(
+        ['Label', 'Pixel', 'Intensity'])
+    filtered_data_LH = filtered_data_LH.drop_duplicates(
+        ['Label', 'Pixel', 'Intensity'])
+    group_by_label_pixel_HL = filtered_data_HL.groupby(['Label', 'Pixel'])
+    group_by_label_pixel_LH = filtered_data_LH.groupby(['Label', 'Pixel'])
+
+    for ng_HL, ng_LH in zip(group_by_label_pixel_HL, group_by_label_pixel_LH):
+        name_HL = ng_HL[0]
+        group_HL = ng_HL[1]
+        name_LH = ng_LH[0]
+        group_LH = ng_LH[1]
+        label = group_HL['Label'].unique()[0]
+        variable = group_HL['Variable'].unique()[0]
+        value = group_HL['Value'].unique()[0]
+        pixel = group_HL['Pixel'].unique()[0]
+        m_HL, c_HL, r_HL, p_HL, se_HL = sp.stats.linregress(
+            group_HL['Intensity'] * 100, group_HL['Jsc'])
+        m_LH, c_LH, r_LH, p_LH, se_LH = sp.stats.linregress(
+            group_LH['Intensity'] * 100, group_LH['Jsc'])
+        r_sq_HL = r_HL**2
+        r_sq_LH = r_LH**2
+        plt.figure(figsize=(A4_width, A4_height), dpi=300)
+        plt.suptitle('Intensity dependence, ' + str(label) + ', pixel ' +
+                     str(pixel) + ', ' + str(variable) + ', ' + str(value),
+                     fontsize=10,
+                     fontweight='bold')
+        plt.subplot(2, 2, 1)
+        plt.scatter(group_HL['Intensity'] * 100,
+                    group_HL['Jsc'],
+                    c='blue',
+                    label='H->L')
+        plt.scatter(group_LH['Intensity'] * 100,
+                    group_LH['Jsc'],
+                    c='red',
+                    label='L->H')
+        plt.legend(loc='upper left', scatterpoints=1, fontsize=9)
+        plt.plot(group_HL['Intensity'] * 100,
+                 group_HL['Intensity'] * 100 * m_HL + c_HL,
+                 c='blue')
+        plt.plot(group_LH['Intensity'] * 100,
+                 group_LH['Intensity'] * 100 * m_LH + c_LH,
+                 c='red')
+        plt.text(
+            np.max(group_HL['Intensity'] * 100) * 0.6,
+            (np.max(group_HL['Jsc']) - np.min(group_HL['Jsc'])) * 0.11 +
+            np.min(group_HL['Jsc']),
+            'm=' + str(round_sig_fig(m_HL, 3)) + ', c=' +
+            str(round_sig_fig(c_HL, 3)) + ', R^2=' +
+            str(round_sig_fig(r_sq_HL, 3)),
+            fontsize=8,
+            color='blue')
+        plt.text(
+            np.max(group_HL['Intensity'] * 100) * 0.6,
+            (np.max(group_HL['Jsc']) - np.min(group_HL['Jsc'])) * 0.01 +
+            np.min(group_HL['Jsc']),
+            'm=' + str(round_sig_fig(m_LH, 3)) + ', c=' +
+            str(round_sig_fig(c_LH, 3)) + ', R^2=' +
+            str(round_sig_fig(r_sq_LH, 3)),
+            fontsize=8,
+            color='red')
+        plt.xlabel('Light intensity (W/cm^2)', fontsize=9)
+        plt.ylabel('Jsc (mA/cm^2)', fontsize=9)
+        m_HL, c_HL, r_HL, p_HL, se_HL = sp.stats.linregress(
+            np.log(group_HL['Jsc']), group_HL['Voc'])
+        m_LH, c_LH, r_LH, p_LH, se_LH = sp.stats.linregress(
+            np.log(group_LH['Jsc']), group_LH['Voc'])
+        r_sq_HL = r_HL**2
+        r_sq_LH = r_LH**2
+        n_HL = m_HL * q / (kB * T)
+        n_LH = m_LH * q / (kB * T)
+        j0_HL = np.exp(-c_HL / m_HL)
+        j0_LH = np.exp(-c_LH / m_LH)
+        plt.subplot(2, 2, 2)
+        plt.scatter(
+            np.log(group_HL['Jsc']),
+            group_HL['Voc'],
+            c='blue',
+            label='H->L')
+        plt.scatter(
+            np.log(group_LH['Jsc']),
+            group_LH['Voc'],
+            c='red',
+            label='L->H')
+        plt.legend(loc='upper left', scatterpoints=1, fontsize=9)
+        plt.plot(
+            np.log(group_HL['Jsc']),
+            np.log(group_HL['Jsc']) * m_HL + c_HL,
+            c='blue')
+        plt.plot(
+            np.log(group_LH['Jsc']),
+            np.log(group_LH['Jsc']) * m_LH + c_LH,
+            c='red')
+        plt.text(
+            np.max(np.log(group_HL['Jsc'])) * 0.3,
+            (np.max(group_HL['Voc']) - np.min(group_HL['Voc'])) * 0.11 +
+            np.min(group_HL['Voc']),
+            'n=' + str(round_sig_fig(n_HL, 3)) + ', J_0=' + ('%.2e' % j0_HL) +
+            ' (mA/cm^2)' + ', R^2=' + str(round_sig_fig(r_sq_HL, 3)),
+            fontsize=8,
+            color='blue')
+        plt.text(
+            np.max(np.log(group_HL['Jsc'])) * 0.3,
+            (np.max(group_HL['Voc']) - np.min(group_HL['Voc'])) * 0.01 +
+            np.min(group_HL['Voc']),
+            'n=' + str(round_sig_fig(n_LH, 3)) + ', J_0=' + ('%.2e' % j0_LH) +
+            ' (mA/cm^2)' + ', R^2=' + str(round_sig_fig(r_sq_LH, 3)),
+            fontsize=8,
+            color='red')
+        plt.xlabel('ln(Jsc) (mA/cm^2)', fontsize=9)
+        plt.ylabel('Voc (V)', fontsize=9)
+        plt.subplot(2, 2, 3)
+        plt.scatter(group_HL['Intensity'] * 100,
+                    group_HL['FF'],
+                    c='blue',
+                    label='H->L')
+        plt.scatter(group_LH['Intensity'] * 100,
+                    group_LH['FF'],
+                    c='red',
+                    label='L->H')
+        plt.legend(loc='lower right', scatterpoints=1, fontsize=9)
+        plt.xlabel('Light intensity (W/cm^2)', fontsize=9)
+        plt.ylabel('FF', fontsize=9)
+        plt.subplot(2, 2, 4)
+        plt.scatter(group_HL['Intensity'] * 100,
+                    group_HL['PCE'],
+                    c='blue',
+                    label='H->L')
+        plt.scatter(group_LH['Intensity'] * 100,
+                    group_LH['PCE'],
+                    c='red',
+                    label='L->H')
+        plt.legend(loc='lower right', scatterpoints=1, fontsize=9)
+        plt.xlabel('Light intensity (W/cm^2)', fontsize=9)
+        plt.ylabel('PCE (%)', fontsize=9)
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.92)
+        plt.savefig(log_file_jv.replace('.txt', '_intensity_' + str(label) +
+                                        '_' + str(pixel) + '.png'))
+        pp.savefig()
 
 # if time_files['exits'] == True:
 #    for f in time_files['files']:
