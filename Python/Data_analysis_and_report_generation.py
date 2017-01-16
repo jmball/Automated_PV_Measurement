@@ -10,8 +10,9 @@ import pandas as pd
 import scipy as sp
 from matplotlib import gridspec
 from matplotlib.backends.backend_pdf import PdfPages
+from pptx import Presentation
+from pptx.util import Inches
 from scipy import signal
-from scipy.stats import linregress
 
 # Choose folder containing data and log file path. Remember to use all forward
 # slashes
@@ -22,19 +23,23 @@ folderpath_maxp = 'Max P Stabilisation/'
 folderpath_intensity = 'Intensity Dependence/'
 folderpath_eqe = 'EQE/'
 filepath_jv = r'TEST 16_LOG.txt'
+filepath_eqe = r'_EQE_LOG.txt'
 log_file_jv = folderpath + folderpath_jv + filepath_jv
 
 # Get username, date, and experiment title from file path for title page of
 # the report.
 folderpath_split = folderpath.split('/')
 username = folderpath_split[2]
-date = folderpath_split[5][0:9]
+date = folderpath_split[5][0:10]
 experiment_title = folderpath_split[5][11:-1]
 
 # Set physical constants
 kB = 1.38065e-23
 q = 1.60218e-19
 T = 300
+
+# Initialise empty list for storing image file paths
+images = []
 
 # Create pdf for adding figures
 pp = PdfPages(log_file_jv.replace('.txt', '_summary.pdf'))
@@ -399,8 +404,11 @@ for i in range(len(boxplotdata_HL['var_names'])):
         subboxplot(boxplotdata_HL, boxplotdata_LH, 'PCE', '(%)', i)
         plt.tight_layout()
         plt.subplots_adjust(top=0.92)
-        plt.savefig(log_file_jv.replace('.txt', '_' + boxplotdata_HL[
-            'var_names'][i] + '_basic_boxplots.png'))
+        image_path = log_file_jv.replace(
+            '.txt',
+            '_' + boxplotdata_HL['var_names'][i] + '_basic_boxplots.png')
+        plt.savefig(image_path)
+        images.append(image_path)
         pp.savefig()
 
         plt.figure(i + 1 + 2 * i, figsize=(A4_width, A4_height), dpi=300)
@@ -440,8 +448,11 @@ for i in range(len(boxplotdata_HL['var_names'])):
         plt.ylim([0, 102])
         plt.tight_layout()
         plt.subplots_adjust(top=0.92)
-        plt.savefig(log_file_jv.replace('.txt', '_' + boxplotdata_HL[
-            'var_names'][i] + '_series_shunt_resistances_yields.png'))
+        image_path = log_file_jv.replace(
+            '.txt', '_' + boxplotdata_HL['var_names'][i] +
+            '_series_shunt_resistances_yields.png')
+        plt.savefig(image_path)
+        images.append(image_path)
         pp.savefig()
 
 # Group data by label and sort ready to plot graph of all pixels per substrate
@@ -515,7 +526,9 @@ for name, group in grouped_by_label:
 
 plt.tight_layout()
 plt.subplots_adjust(top=0.92)
-plt.savefig(log_file_jv.replace('.txt', '_all_JVs.png'))
+image_path = log_file_jv.replace('.txt', '_all_JVs.png')
+plt.savefig(image_path)
+images.append(image_path)
 pp.savefig()
 
 # filter dataframe to leave on the best pixel for each variable value
@@ -583,23 +596,23 @@ for file in best_pixels['File_Path']:
     plt.title(str(variables[i - 1] + ', ' + values[i - 1]), fontsize=8)
     plt.plot(JV_light_LH_data[:, 0],
              JV_light_LH_data[:, 1],
-             label='l f->s',
+             label='L->H',
              c='red',
              lw=2.0)
     plt.plot(JV_light_HL_data[:, 0],
              JV_light_HL_data[:, 1],
-             label='l s->f',
+             label='H->L',
              c='green',
              lw=2.0)
     try:
         plt.plot(JV_dark_LH_data[:, 0],
                  JV_dark_LH_data[:, 1],
-                 label='d f->s',
+                 label='L->H',
                  c='blue',
                  lw=2.0)
         plt.plot(JV_dark_HL_data[:, 0],
                  JV_dark_HL_data[:, 1],
-                 label='d s->f',
+                 label='H->L',
                  c='orange',
                  lw=2.0)
     except NameError:
@@ -615,7 +628,9 @@ for file in best_pixels['File_Path']:
 
 plt.tight_layout()
 plt.subplots_adjust(top=0.92)
-plt.savefig(log_file_jv.replace('.txt', '_best_JVs.png'))
+image_path = log_file_jv.replace('.txt', '_best_JVs.png')
+plt.savefig(image_path)
+images.append(image_path)
 pp.savefig()
 
 
@@ -825,8 +840,10 @@ if time_files['exists']:
         ax2.set_xlabel('Time (s)', fontsize=7)
         if (i % 4 == 3) or (i == i_max):
             gs.update(wspace=0.3, hspace=0.1)
-            fig.savefig(log_file_jv.replace('.txt', '_jt_characteristics' + '_'
-                                            + str(j) + '.png'))
+            image_path = log_file_jv.replace(
+                '.txt', '_jt_characteristics' + '_' + str(j) + '.png')
+            fig.savefig(image_path)
+            images.append(image_path)
             pp.savefig()
         i += 1
 
@@ -868,8 +885,10 @@ if maxp_files['exists']:
         axes[0].set_xlabel('Time (s)')
         if (i % 4 == 3) or (i == i_max):
             gs.update(wspace=0.6, hspace=0.3)
-            fig.savefig(log_file_jv.replace('.txt', '_max_P_stab' + '_' + str(
-                j) + '.png'))
+            image_path = log_file_jv.replace(
+                '.txt', '_max_P_stab' + '_' + str(j) + '.png')
+            fig.savefig(image_path)
+            images.append(image_path)
             pp.savefig()
         i += 1
 
@@ -883,10 +902,12 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
                               'Area', 'Stabil_Level', 'Stabil_time',
                               'Meas_delay', 'Vmp', 'File_Path', 'Scan_rate',
                               'Scan_direction', 'Intensity'])
-    sorted_data = data.sort_values(['Label', 'Pixel', 'Intensity', 'PCE'],
-                                   ascending=[True, True, True, False])
-    filtered_data_HL = sorted_data[(sorted_data.Scan_direction == 'HL')]
-    filtered_data_LH = sorted_data[(sorted_data.Scan_direction == 'LH')]
+    sorted_data_int = data.sort_values(['Label', 'Pixel', 'Intensity', 'PCE'],
+                                       ascending=[True, True, True, False])
+    filtered_data_HL = sorted_data_int[(
+        sorted_data_int.Scan_direction == 'HL')]
+    filtered_data_LH = sorted_data_int[(
+        sorted_data_int.Scan_direction == 'LH')]
     filtered_data_HL = filtered_data_HL.drop_duplicates(
         ['Label', 'Pixel', 'Intensity'])
     filtered_data_LH = filtered_data_LH.drop_duplicates(
@@ -1024,35 +1045,119 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
         plt.ylabel('PCE (%)', fontsize=9)
         plt.tight_layout()
         plt.subplots_adjust(top=0.92)
-        plt.savefig(log_file_jv.replace('.txt', '_intensity_' + str(label) +
-                                        '_' + str(pixel) + '.png'))
+        image_path = log_file_jv.replace(
+            '.txt', '_intensity_' + str(label) + '_' + str(pixel) + '.png')
+        plt.savefig(image_path)
+        images.append(image_path)
         pp.savefig()
 
-# if time_files['exits'] == True:
-#    for f in time_files['files']:
-#        try:
-#            Jt_data = np.genfromtxt(f, delimiter='\t')
-#        except OSError:
-#            pass
+# Plot eqe graphs if experiment data exists
+if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
+    data = pd.read_csv(folderpath + folderpath_eqe + filepath_eqe,
+                       delimiter='\t',
+                       header=0,
+                       names=['Label', 'Pixel', 'Variable', 'Value',
+                              'Position', 'Jsc', 'Mismatch', 'Area',
+                              'Frequency', 'File_Path'])
+    sorted_data_eqe = data.sort_values(['Label', 'Pixel', 'Jsc'],
+                                       ascending=[True, True, False])
+    grouped_by_label = sorted_data_eqe.groupby(['Label'])
+
+    i = 0
+    i_max = len(sorted_data_eqe.drop_duplicates(['Label'])) - 1
+    j = 0
+    for name, group in grouped_by_label:
+        label = group['Label'].unique()[0]
+        variable = group['Variable'].unique()[0]
+        value = group['Value'].unique()[0]
+        c_div = 1 / len(group)
+
+        if i % 4 == 0:
+            plt.figure(figsize=(A4_width, A4_height), dpi=300)
+            plt.suptitle('External quantum efficiency',
+                         fontsize=10,
+                         fontweight='bold')
+            j += 1
+        plt.subplot(2, 2, (i % 4) + 1)
+        k = 0
+        for path, pixel in zip(group['File_Path'], group['Pixel']):
+            data = np.genfromtxt(path, delimiter='\t')
+            plt.plot(data[:, 0],
+                     data[:, 1],
+                     c=cmap(k * c_div),
+                     label=str(pixel))
+            k += 1
+        plt.legend(loc='lower center', fontsize=7)
+        plt.xlabel('Wavelength (nm)', fontsize=9)
+        plt.ylabel('EQE (%)', fontsize=9)
+        plt.title(
+            str(label) + ', ' + str(variable) + ', ' + str(value),
+            fontsize=8)
+        if (i % 4 == 3) or (i == i_max):
+            plt.tight_layout()
+            plt.subplots_adjust(top=0.92)
+            image_path = log_file_jv.replace('.txt', '_EQE_' + str(j) + '.png')
+            plt.savefig(image_path)
+            images.append(image_path)
+            pp.savefig()
+        i += 1
 
 # Close pdf of saved figures
 pp.close()
 
-# Find all png's in a folder and make a pptx
-# os.chdir(folderpath)
-# images = [f for f in os.listdir(folderpath)
-#          if os.path.isfile(os.path.join(folderpath,f)) and f.endswith('png')]
+# Create a powerpoint presentation to add figures to
+prs = Presentation()
 
-# prs = Presentation()
-# blank_slide_layout = prs.slide_layouts[6]
-# height = prs.slide_height
-# width = prs.slide_width
-# left = top = Inches(0)
-# for image in images:
-#    slide = prs.slides.add_slide(blank_slide_layout)
-#    if image.endswith('resistances.png'):
-#        slide.shapes.add_picture(image, left, top, width=width)
-#    else:
-#        slide.shapes.add_picture(image, left, top, height=height)
+# Add title page with experiment title, date, and username
+title_slide_layout = prs.slide_layouts[0]
+slide = prs.slides.add_slide(title_slide_layout)
+title = slide.shapes.title
+subtitle = slide.placeholders[1]
+title.text = experiment_title
+subtitle.text = date + ', ' + username
 
-# prs.save(log_file.replace('.txt', '_summary.pptx'))
+# Add slide with table for manual completion of experimental details
+blank_slide_layout = prs.slide_layouts[6]
+slide = prs.slides.add_slide(blank_slide_layout)
+shapes = slide.shapes
+rows = 17
+cols = 6
+left = Inches(0.15)
+top = Inches(0.02)
+width = prs.slide_width - Inches(0.25)
+height = prs.slide_height - Inches(0.05)
+table = shapes.add_table(rows, cols, left, top, width, height).table
+
+# set column widths
+table.columns[0].width = Inches(0.8)
+table.columns[1].width = Inches(1.2)
+table.columns[2].width = Inches(2.0)
+table.columns[3].width = Inches(2.0)
+table.columns[4].width = Inches(2.0)
+table.columns[5].width = Inches(1.7)
+
+# write column headings
+table.cell(0, 0).text = 'Label'
+table.cell(0, 1).text = 'Substrate'
+table.cell(0, 2).text = 'Bottom contact'
+table.cell(0, 3).text = 'Perovskite'
+table.cell(0, 4).text = 'Top contact'
+table.cell(0, 5).text = 'Top electrode'
+
+# fill in label column
+i = 1
+for item in sorted_data['Label'].unique():
+    table.cell(i, 0).text = str(item)
+    i += 1
+
+# Add images to blank slides
+blank_slide_layout = prs.slide_layouts[6]
+height = prs.slide_height
+width = prs.slide_width
+left = top = Inches(0)
+for image in images:
+    slide = prs.slides.add_slide(blank_slide_layout)
+    slide.shapes.add_picture(image, left, top, height=height)
+
+# Save powerpoint presentation
+prs.save(log_file_jv.replace('.txt', '_summary.pptx'))
