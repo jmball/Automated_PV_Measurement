@@ -56,6 +56,7 @@
 		<Item Name="Save scan settings.vi" Type="VI" URL="../SubVIs/Save scan settings.vi"/>
 		<Item Name="Save Stabilisation Data.vi" Type="VI" URL="../SubVIs/Save Stabilisation Data.vi"/>
 		<Item Name="Scan settings.ctl" Type="VI" URL="../TypeDefs/Scan settings.ctl"/>
+		<Item Name="Serial write-read.vi" Type="VI" URL="../../J-V Measurement/Subvi/Serial write-read.vi"/>
 		<Item Name="Set pins on switch board.vi" Type="VI" URL="../SubVIs/Set pins on switch board.vi"/>
 		<Item Name="Settings Boolean.ctl" Type="VI" URL="../TypeDefs/Settings Boolean.ctl"/>
 		<Item Name="Setup EQE.vi" Type="VI" URL="../SubVIs/Setup EQE.vi"/>
