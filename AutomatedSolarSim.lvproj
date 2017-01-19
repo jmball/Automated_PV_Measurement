@@ -24,6 +24,7 @@
 		<Item Name="Check stage contr is connected.vi" Type="VI" URL="../SubVIs/Check stage contr is connected.vi"/>
 		<Item Name="Close EQE.vi" Type="VI" URL="../SubVIs/Close EQE.vi"/>
 		<Item Name="CloseEQE_ActiveX.vi" Type="VI" URL="../SubVIs/CloseEQE_ActiveX.vi"/>
+		<Item Name="Create date array.vi" Type="VI" URL="../SubVIs/Create date array.vi"/>
 		<Item Name="Create Intensity Dep folder.vi" Type="VI" URL="../SubVIs/Create Intensity Dep folder.vi"/>
 		<Item Name="Create JV folder.vi" Type="VI" URL="../SubVIs/Create JV folder.vi"/>
 		<Item Name="Create Max Power Stab folder.vi" Type="VI" URL="../SubVIs/Create Max Power Stab folder.vi"/>
@@ -244,7 +245,7 @@
 			<Item Name="CalculateEQEandJsc.vi" Type="VI" URL="../SubVIs/CalculateEQEandJsc.vi"/>
 			<Item Name="Calibrate filter wheel.vi" Type="VI" URL="../SubVIs/Calibrate filter wheel.vi"/>
 			<Item Name="closeDeviceReference.vi" Type="VI" URL="../../../../../../../Program Files (x86)/NSC-A2L/Libraries-Source-Code/Sample Source Code/USB/USB Terminal Labview - 103 - LV version 8.5/PerformaxLV_v103.llb/closeDeviceReference.vi"/>
-			<Item Name="Create Data Folders_IIT.vi" Type="VI" URL="../../J-V Measurement/Subvi/Create Data Folders_IIT.vi"/>
+			<Item Name="Create Data Folders_v2.vi" Type="VI" URL="../../J-V Measurement/Subvi/Create Data Folders_v2.vi"/>
 			<Item Name="Create EQE Data Folder and File Path.vi" Type="VI" URL="../SubVIs/Create EQE Data Folder and File Path.vi"/>
 			<Item Name="Create Jt folder.vi" Type="VI" URL="../../J-V Measurement/Subvi/Create Jt folder.vi"/>
 			<Item Name="Disable Motor.vi" Type="VI" URL="../SubVIs/Disable Motor.vi"/>
