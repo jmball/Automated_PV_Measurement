@@ -915,6 +915,7 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
     group_by_label_pixel_HL = filtered_data_HL.groupby(['Label', 'Pixel'])
     group_by_label_pixel_LH = filtered_data_LH.groupby(['Label', 'Pixel'])
 
+    # Plot intensity dependent JV curve parameters
     for ng_HL, ng_LH in zip(group_by_label_pixel_HL, group_by_label_pixel_LH):
         name_HL = ng_HL[0]
         group_HL = ng_HL[1]
@@ -1050,6 +1051,60 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
         plt.savefig(image_path)
         images.append(image_path)
         pp.savefig()
+
+# Plot intensity dependent V curves
+    i = 0
+    i_max = len(group_by_label_pixel_HL) - 1
+    j = 0
+    for ng_HL, ng_LH in zip(group_by_label_pixel_HL, group_by_label_pixel_LH):
+        name_HL = ng_HL[0]
+        group_HL = ng_HL[1]
+        name_LH = ng_LH[0]
+        group_LH = ng_LH[1]
+        label = group_HL['Label'].unique()[0]
+        variable = group_HL['Variable'].unique()[0]
+        value = group_HL['Value'].unique()[0]
+        pixel = group_HL['Pixel'].unique()[0]
+        jsc_max = max(max(group_HL['Jsc']), max(group_LH['Jsc']))
+        c_div = 1 / len(group_HL)
+        if i % 4 == 0:
+            plt.figure(figsize=(A4_width, A4_height), dpi=300)
+            plt.suptitle('Intensity dependent JV curves',
+                         fontsize=10,
+                         fontweight='bold')
+            j += 1
+        plt.subplot(2, 2, (i % 4) + 1)
+        k = 0
+        for path_HL, path_LH, intensity_HL, intensity_LH in zip(
+                group_HL['File_Path'], group_LH['File_Path'],
+                group_HL['Intensity'], group_LH['Intensity']):
+            data_HL = np.genfromtxt(path_HL, delimiter='\t')
+            data_LH = np.genfromtxt(path_LH, delimiter='\t')
+            data_HL = data_HL[~np.isnan(data_HL).any(axis=1)]
+            data_LH = data_LH[~np.isnan(data_LH).any(axis=1)]
+            plt.plot(data_HL[:, 0],
+                     data_HL[:, 1],
+                     c=cmap(k * c_div),
+                     label=str(round(intensity_HL * 100, 1)) + ' W/cm^2')
+            plt.plot(data_LH[:, 0], data_LH[:, 1], c=cmap(k * c_div))
+            k += 1
+        plt.legend(loc='best', fontsize=7)
+        plt.xlabel('Applied voltage (V)', fontsize=9)
+        plt.ylabel('J (mA/cm^2)', fontsize=9)
+        plt.ylim([-jsc_max * 1.05, jsc_max * 1.05])
+        plt.title(
+            str(label) + ', pixel ' + str(pixel) + ', ' + str(variable) + ', '
+            + str(value),
+            fontsize=8)
+        if (i % 4 == 3) or (i == i_max):
+            plt.tight_layout()
+            plt.subplots_adjust(top=0.92)
+            image_path = log_file_jv.replace(
+                '.txt', '_intensity_JV_' + str(j) + '.png')
+            plt.savefig(image_path)
+            images.append(image_path)
+            pp.savefig()
+        i += 1
 
 # Plot eqe graphs if experiment data exists
 if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
