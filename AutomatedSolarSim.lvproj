@@ -279,6 +279,7 @@
 			<Item Name="Save Intensity Dep Data.vi" Type="VI" URL="../SubVIs/Save Intensity Dep Data.vi"/>
 			<Item Name="Save J-t Data_IIT.vi" Type="VI" URL="../../J-V Measurement/Subvi/Save J-t Data_IIT.vi"/>
 			<Item Name="Select pin on PCB.vi" Type="VI" URL="../SubVIs/Select pin on PCB.vi"/>
+			<Item Name="Send_lamp_power_supply_command.vi" Type="VI" URL="../SubVIs/Send_lamp_power_supply_command.vi"/>
 			<Item Name="sendReceiveCommand.vi" Type="VI" URL="../../../../../../../Program Files (x86)/NSC-A2L/Libraries-Source-Code/Sample Source Code/USB/USB Terminal Labview - 103 - LV version 8.5/PerformaxLV_v103.llb/sendReceiveCommand.vi"/>
 			<Item Name="setTimeOuts.vi" Type="VI" URL="../../../../../../../Program Files (x86)/NSC-A2L/Libraries-Source-Code/Sample Source Code/USB/USB Terminal Labview - 103 - LV version 8.5/PerformaxLV_v103.llb/setTimeOuts.vi"/>
 			<Item Name="Sort 2D Cell details Array.vi" Type="VI" URL="../SubVIs/Sort 2D Cell details Array.vi"/>
