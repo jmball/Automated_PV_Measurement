@@ -32,6 +32,7 @@
 		<Item Name="Disable and grey out controls.vi" Type="VI" URL="../../Solar_Cell_Stability/VIs/subvis/Disable and grey out controls.vi"/>
 		<Item Name="Disable stage.vi" Type="VI" URL="../SubVIs/Disable stage.vi"/>
 		<Item Name="Disable-enable scan settgin controls.vi" Type="VI" URL="../../Solar_Cell_Stability/VIs/subvis/Disable-enable scan settgin controls.vi"/>
+		<Item Name="Download_weather_data.vi" Type="VI" URL="../../J-V Measurement/Subvi/Download_weather_data.vi"/>
 		<Item Name="Enable stage.vi" Type="VI" URL="../SubVIs/Enable stage.vi"/>
 		<Item Name="Find best pixel from log file.vi" Type="VI" URL="../SubVIs/Find best pixel from log file.vi"/>
 		<Item Name="Find max power voltage from log file.vi" Type="VI" URL="../SubVIs/Find max power voltage from log file.vi"/>
