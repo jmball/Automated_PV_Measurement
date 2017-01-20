@@ -2,8 +2,10 @@
 # lines as appropriate.
 
 import os
+from datetime import date, timedelta
 from functools import reduce
 
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -30,7 +32,7 @@ log_file_jv = folderpath + folderpath_jv + filepath_jv
 # the report.
 folderpath_split = folderpath.split('/')
 username = folderpath_split[2]
-date = folderpath_split[5][0:10]
+exp_date = folderpath_split[5][0:10]
 experiment_title = folderpath_split[5][11:-1]
 
 # Set physical constants
@@ -633,12 +635,14 @@ pp.savefig()
 sorted_data_scan = data.sort_values(
     ['Variable', 'Value', 'Label', 'Pixel', 'scan_num'],
     ascending=[True, True, True, True, True])
-filtered_scan_HL = sorted_data_scan[(sorted_data.Condition == 'Light') & (
-    sorted_data.FF > 0.1) & (sorted_data.FF < 0.9) & (sorted_data.Jsc > 0.01) &
-                                    (sorted_data.Scan_direction == 'HL')]
-filtered_scan_LH = sorted_data_scan[(sorted_data.Condition == 'Light') & (
-    sorted_data.FF > 0.1) & (sorted_data.FF < 0.9) & (sorted_data.Jsc > 0.01) &
-                                    (sorted_data.Scan_direction == 'LH')]
+filtered_scan_HL = sorted_data_scan[(sorted_data_scan.Condition == 'Light') & (
+    sorted_data_scan.FF > 0.1) & (sorted_data_scan.FF < 0.9) & (
+        sorted_data_scan.Jsc > 0.01) & (sorted_data_scan.Scan_direction == 'HL'
+                                        )]
+filtered_scan_LH = sorted_data_scan[(sorted_data_scan.Condition == 'Light') & (
+    sorted_data_scan.FF > 0.1) & (sorted_data_scan.FF < 0.9) & (
+        sorted_data_scan.Jsc > 0.01) & (sorted_data_scan.Scan_direction == 'LH'
+                                        )]
 
 # Drop pixels only working in one scan direction
 filtered_data_HL = filtered_data_HL[filtered_data_HL.Label.isin(
@@ -1234,6 +1238,75 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
             pp.savefig()
         i += 1
 
+# Get weather data and add to dataframe
+weather_data_path = r'C:/SolarSimData/WeatherData/WxLog.csv'
+weather_data = pd.read_csv(
+    weather_data_path,
+    delimiter=',',
+    skiprows=5,
+    header=0,
+    usecols=[0, 1, 11, 13, 14, 16, 17, 19, 20, 22],
+    parse_dates=[[0, 1]],
+    names=['Date', 'time', 'Lab T', 'Lab RH', 'Fume hood T', 'Fume hood RH',
+           'Dessicator T', 'Dessicator RH', 'Solar sim T', 'Solar sim RH'])
+
+# Filter dataframe to leave only data from last 7 days
+one_week_ago = date.today() - timedelta(days=7)
+weather_data = weather_data.loc[weather_data.Date_time > one_week_ago]
+
+# Plot weather data and save images
+fig = plt.figure(figsize=(A4_width, A4_height), dpi=300)
+fig.suptitle('Weather report for last 7 days', fontsize=10, fontweight='bold')
+gs = gridspec.GridSpec(2, 1)
+ax1 = fig.add_subplot(gs[0, 0])
+ax1.plot_date(weather_data['Date_time'],
+              weather_data['Lab T'],
+              fmt='-',
+              label='Lab')
+ax1.plot_date(weather_data['Date_time'],
+              weather_data['Fume hood T'],
+              fmt='-',
+              label='Fumehood')
+ax1.plot_date(weather_data['Date_time'],
+              weather_data['Dessicator T'],
+              fmt='-',
+              label='Dessicator')
+ax1.plot_date(weather_data['Date_time'],
+              weather_data['Solar sim T'],
+              fmt='-',
+              label='Solar sim')
+ax1.set_xticklabels([])
+ax1.set_ylim([15, 30])
+ax1.legend(loc='best')
+ax1.set_ylabel('Temperature (C)', fontsize=8)
+ax2 = fig.add_subplot(gs[1, 0])
+ax2.plot_date(weather_data['Date_time'],
+              weather_data['Lab RH'],
+              fmt='-',
+              label='Lab')
+ax2.plot_date(weather_data['Date_time'],
+              weather_data['Fume hood RH'],
+              fmt='-',
+              label='Fumehood')
+ax2.plot_date(weather_data['Date_time'],
+              weather_data['Dessicator RH'],
+              fmt='-',
+              label='Dessicator')
+ax2.plot_date(weather_data['Date_time'],
+              weather_data['Solar sim RH'],
+              fmt='-',
+              label='Solar sim')
+ax2.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y %H:%M'))
+ax2.set_ylim([0, 100])
+ax2.legend(loc='best')
+ax2.set_ylabel('Relative humidity (%)', fontsize=8)
+plt.xticks(rotation='35', ha='right', fontsize=8)
+gs.update(wspace=0.3, hspace=0.05)
+image_path = log_file_jv.replace('.txt', '_weather_' + '.png')
+plt.savefig(image_path)
+images.append(image_path)
+pp.savefig()
+
 # Close pdf of saved figures
 pp.close()
 
@@ -1246,7 +1319,7 @@ slide = prs.slides.add_slide(title_slide_layout)
 title = slide.shapes.title
 subtitle = slide.placeholders[1]
 title.text = experiment_title
-subtitle.text = date + ', ' + username
+subtitle.text = exp_date + ', ' + username
 
 # Add slide with table for manual completion of experimental details
 blank_slide_layout = prs.slide_layouts[6]
