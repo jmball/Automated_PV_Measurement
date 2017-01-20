@@ -54,6 +54,13 @@ data = pd.read_csv(log_file_jv,
                           'File_Path', 'Scan_rate', 'Scan_direction',
                           'Intensity'])
 
+# Get scan number from file path for each row in log file and create new
+# column indicating the scan number.
+scan_num = []
+for path in data['File_Path']:
+    scan_num.append(path.split('_')[4].strip('scan').strip('.txt'))
+data['scan_num'] = pd.Series(scan_num, index=data.index)
+
 
 # Define a function to do extra analysis on the measured JV curves
 def extra_JV_analysis(filepath, Jsc, Vmp, Voc, Area):
@@ -145,23 +152,12 @@ filtered_data_HL = filtered_data_HL.drop_duplicates(['Label', 'Pixel'])
 filtered_data_LH = filtered_data_LH.drop_duplicates(['Label', 'Pixel'])
 
 # Drop pixels only working in one scan direction
-labels_LH = filtered_data_LH['Label'].unique()
-label_existing_HL = []
-for label in filtered_data_HL.Label:
-    if label in labels_LH:
-        label_existing_HL.append(True)
-    else:
-        label_existing_HL.append(False)
-filtered_data_HL = filtered_data_HL[label_existing_HL]
-
-labels_HL = filtered_data_HL['Label'].unique()
-label_existing_LH = []
-for label in filtered_data_LH.Label:
-    if label in labels_HL:
-        label_existing_LH.append(True)
-    else:
-        label_existing_LH.append(False)
-filtered_data_LH = filtered_data_LH[label_existing_LH]
+filtered_data_HL = filtered_data_HL[filtered_data_HL.Label.isin(
+    filtered_data_LH.Label.values) & filtered_data_HL.Pixel.isin(
+        filtered_data_LH.Pixel.values)]
+filtered_data_LH = filtered_data_LH[filtered_data_LH.Label.isin(
+    filtered_data_HL.Label.values) & filtered_data_LH.Pixel.isin(
+        filtered_data_HL.Pixel.values)]
 
 # Calculate proportion of working pixels.
 group_var_s = sorted_data.drop_duplicates(['Label', 'Pixel'])
@@ -632,6 +628,87 @@ image_path = log_file_jv.replace('.txt', '_best_JVs.png')
 plt.savefig(image_path)
 images.append(image_path)
 pp.savefig()
+
+# Sort and filter data ready for plotting different scan rates/repeat scans
+sorted_data_scan = data.sort_values(
+    ['Variable', 'Value', 'Label', 'Pixel', 'scan_num'],
+    ascending=[True, True, True, True, True])
+filtered_scan_HL = sorted_data_scan[(sorted_data.Condition == 'Light') & (
+    sorted_data.FF > 0.1) & (sorted_data.FF < 0.9) & (sorted_data.Jsc > 0.01) &
+                                    (sorted_data.Scan_direction == 'HL')]
+filtered_scan_LH = sorted_data_scan[(sorted_data.Condition == 'Light') & (
+    sorted_data.FF > 0.1) & (sorted_data.FF < 0.9) & (sorted_data.Jsc > 0.01) &
+                                    (sorted_data.Scan_direction == 'LH')]
+
+# Drop pixels only working in one scan direction
+filtered_data_HL = filtered_data_HL[filtered_data_HL.Label.isin(
+    filtered_data_LH.Label.values) & filtered_data_HL.Pixel.isin(
+        filtered_data_LH.Pixel.values)]
+filtered_data_LH = filtered_data_LH[filtered_data_LH.Label.isin(
+    filtered_data_HL.Label.values) & filtered_data_LH.Pixel.isin(
+        filtered_data_HL.Pixel.values)]
+
+# Create groups of data for each pixel for a given label
+group_by_label_pixel_HL = filtered_scan_HL.groupby(['Label', 'Pixel'])
+group_by_label_pixel_LH = filtered_scan_LH.groupby(['Label', 'Pixel'])
+
+# Iterate through these groups and plot JV curves if more than one scan hasn
+# has been performed
+i = 0
+i_max = len(group_by_label_pixel_HL) - 1
+j = 0
+for ng_HL, ng_LH in zip(group_by_label_pixel_HL, group_by_label_pixel_LH):
+    name_HL = ng_HL[0]
+    group_HL = ng_HL[1]
+    name_LH = ng_LH[0]
+    group_LH = ng_LH[1]
+    if any(int(scan) > 0 for scan in group_HL['scan_num']):
+        label = group_HL['Label'].unique()[0]
+        variable = group_HL['Variable'].unique()[0]
+        value = group_HL['Value'].unique()[0]
+        pixel = group_HL['Pixel'].unique()[0]
+        jsc_max = max(max(group_HL['Jsc']), max(group_LH['Jsc']))
+        c_div = 1 / len(group_HL)
+        if i % 4 == 0:
+            plt.figure(figsize=(A4_width, A4_height), dpi=300)
+            plt.suptitle('Repeat scan/scan rate variation JV curves',
+                         fontsize=10,
+                         fontweight='bold')
+            j += 1
+        plt.subplot(2, 2, (i % 4) + 1)
+        k = 0
+        for path_HL, path_LH, scan_rate_HL, scan_rate_LH, scan_num_HL, scan_num_LH in zip(
+                group_HL['File_Path'], group_LH['File_Path'],
+                group_HL['Scan_rate'], group_LH['Scan_rate'],
+                group_HL['scan_num'], group_LH['scan_num']):
+            data_HL = np.genfromtxt(path_HL, delimiter='\t')
+            data_LH = np.genfromtxt(path_LH, delimiter='\t')
+            data_HL = data_HL[~np.isnan(data_HL).any(axis=1)]
+            data_LH = data_LH[~np.isnan(data_LH).any(axis=1)]
+            plt.plot(
+                data_HL[:, 0],
+                data_HL[:, 1],
+                c=cmap(k * c_div),
+                label=str(scan_num_HL) + ', ' + str(scan_rate_HL) + ' V/s')
+            plt.plot(data_LH[:, 0], data_LH[:, 1], c=cmap(k * c_div))
+            k += 1
+        plt.legend(loc='best', fontsize=7)
+        plt.xlabel('Applied voltage (V)', fontsize=9)
+        plt.ylabel('J (mA/cm^2)', fontsize=9)
+        plt.ylim([-jsc_max * 1.05, jsc_max * 1.05])
+        plt.title(
+            str(label) + ', pixel ' + str(pixel) + ', ' + str(variable) + ', '
+            + str(value),
+            fontsize=8)
+        if (i % 4 == 3) or (i == i_max):
+            plt.tight_layout()
+            plt.subplots_adjust(top=0.92)
+            image_path = log_file_jv.replace(
+                '.txt', '_repeat_scan_JVs_' + str(j) + '.png')
+            plt.savefig(image_path)
+            images.append(image_path)
+            pp.savefig()
+        i += 1
 
 
 # Check whether other experiments have been performed and therefore if more
