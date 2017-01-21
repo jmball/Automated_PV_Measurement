@@ -43,6 +43,7 @@
 		<Item Name="JV Data analysis from master log file.vi" Type="VI" URL="../SubVIs/JV Data analysis from master log file.vi"/>
 		<Item Name="Keithley 24XX.lvlib" Type="Library" URL="/&lt;instrlib&gt;/keithley_24xx/Keithley 24XX/Keithley 24XX.lvlib"/>
 		<Item Name="Keithley J-t IIT_v2.vi" Type="VI" URL="../SubVIs/Keithley J-t IIT_v2.vi"/>
+		<Item Name="Lamp_power_control.vi" Type="VI" URL="../../J-V Measurement/Prelim/Lamp_power_control.vi"/>
 		<Item Name="Load saved scan settings_arbitray cluster elements.vi" Type="VI" URL="../SubVIs/Load saved scan settings_arbitray cluster elements.vi"/>
 		<Item Name="Measure EQE.vi" Type="VI" URL="../SubVIs/Measure EQE.vi"/>
 		<Item Name="Measure EQE_v2.vi" Type="VI" URL="../SubVIs/Measure EQE_v2.vi"/>
