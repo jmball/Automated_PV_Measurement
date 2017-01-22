@@ -1248,7 +1248,7 @@ weather_data = pd.read_csv(
     usecols=[0, 1, 11, 13, 14, 16, 17, 19, 20, 22],
     parse_dates=[[0, 1]],
     names=['Date', 'time', 'Lab T', 'Lab RH', 'Fume hood T', 'Fume hood RH',
-           'Dessicator T', 'Dessicator RH', 'Solar sim T', 'Solar sim RH'])
+           'Solar sim T', 'Solar sim RH', 'Dessicator T', 'Dessicator RH'])
 
 # Filter dataframe to leave only data from last 7 days
 one_week_ago = date.today() - timedelta(days=7)
@@ -1268,13 +1268,13 @@ ax1.plot_date(weather_data['Date_time'],
               fmt='-',
               label='Fumehood')
 ax1.plot_date(weather_data['Date_time'],
-              weather_data['Dessicator T'],
-              fmt='-',
-              label='Dessicator')
-ax1.plot_date(weather_data['Date_time'],
               weather_data['Solar sim T'],
               fmt='-',
               label='Solar sim')
+ax1.plot_date(weather_data['Date_time'],
+              weather_data['Dessicator T'],
+              fmt='-',
+              label='Dessicator')
 ax1.set_xticklabels([])
 ax1.set_ylim([15, 30])
 ax1.legend(loc='best')
@@ -1289,13 +1289,13 @@ ax2.plot_date(weather_data['Date_time'],
               fmt='-',
               label='Fumehood')
 ax2.plot_date(weather_data['Date_time'],
-              weather_data['Dessicator RH'],
-              fmt='-',
-              label='Dessicator')
-ax2.plot_date(weather_data['Date_time'],
               weather_data['Solar sim RH'],
               fmt='-',
               label='Solar sim')
+ax2.plot_date(weather_data['Date_time'],
+              weather_data['Dessicator RH'],
+              fmt='-',
+              label='Dessicator')
 ax2.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y %H:%M'))
 ax2.set_ylim([0, 100])
 ax2.legend(loc='best')
