@@ -762,15 +762,13 @@ def build_log_df(exp_files, master_log):
                   'File_Path': exp_files['files'],
                   'Scan_direction': scan_dir}
     files_df = pd.DataFrame(files_dict)
+    files_df = files_df.sort_values(['Label'], ascending=True)
     unique_labels_df = master_log.drop_duplicates(['Label'])
-    vars = []
-    vals = []
-    for item in files_df['Label']:
-        row = unique_labels_df[unique_labels_df.Label == item]
-        vars.append(row['Variable'][0])
-        vals.append(row['Value'][0])
-    files_df['Variable'] = vars
-    files_df['Value'] = vals
+    unique_labels_df = unique_labels_df.sort_values(['Label'], ascending=True)
+    unique_labels_df = unique_labels_df[unique_labels_df.Label.isin(
+        files_df.Label.values)]
+    files_df['Variable'] = unique_labels_df['Variable']
+    files_df['Value'] = unique_labels_df['Value']
 
     return files_df
 
@@ -903,9 +901,10 @@ if time_files['exists']:
         ax1.set_xticks(xticks)
         ax1.set_xticklabels([])
         ax1.set_xlim([xticks[0], xticks[-1]])
-        ax1.set_title(row['Label'] + ', pixel ' + row['Pixel'] + ', ' +
-                      row['Variable'] + ', ' + row['Value'],
-                      fontsize=9)
+        ax1.set_title(
+            str(row['Label']) + ', pixel ' + str(row['Pixel']) + ', ' +
+            str(row['Variable']) + ', ' + str(row['Value']),
+            fontsize=9)
         ax2 = fig.add_subplot(gs[(int(np.floor((i / 2) % 2)) * 4) + 2, i % 2])
         ax2.plot(data[:, 0], data[:, 1], 'black')
         yticks = calc_ticks(np.min(data[:, 1]), np.max(data[:, 1]))
@@ -952,9 +951,10 @@ if maxp_files['exists']:
         data = np.genfromtxt(path, delimiter='\t')
         data = data[~np.isnan(data).any(axis=1)]
         ax = fig.add_subplot(gs[int(np.floor(i / 2)), i % 2])
-        ax.set_title(row['Label'] + ', pixel ' + row['Pixel'] + ', ' +
-                     row['Variable'] + ', ' + row['Value'],
-                     fontsize=9)
+        ax.set_title(
+            str(row['Label']) + ', pixel ' + str(row['Pixel']) + ', ' +
+            str(row['Variable']) + ', ' + str(row['Value']),
+            fontsize=9)
         axes = [ax, ax.twinx(), ax.twinx()]
         axes[-1].spines['right'].set_position(('axes', 1.2))
         axes[-1].set_frame_on(True)
