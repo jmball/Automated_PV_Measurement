@@ -18,13 +18,13 @@ from scipy import signal
 
 # Choose folder containing data and log file path. Remember to use all forward
 # slashes
-folderpath = r'C:/SolarSimData/James B/2016/11-Nov/11-30-2016 Test 16/'
+folderpath = r'C:/SolarSimData/James B/2017/01-Jan/21-01-2017 Test/J-V/'
 folderpath_jv = 'J-V/'
 folderpath_time = 'Time Dependence/'
 folderpath_maxp = 'Max P Stabilisation/'
 folderpath_intensity = 'Intensity Dependence/'
 folderpath_eqe = 'EQE/'
-filepath_jv = r'TEST 16_LOG.txt'
+filepath_jv = r'TEST_LOG.txt'
 filepath_eqe = r'_EQE_LOG.txt'
 log_file_jv = folderpath + folderpath_jv + filepath_jv
 
