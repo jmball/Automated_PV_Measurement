@@ -33,7 +33,7 @@ log_file_jv = folderpath + folderpath_jv + filepath_jv
 folderpath_split = folderpath.split('/')
 username = folderpath_split[2]
 exp_date = folderpath_split[5][0:10]
-experiment_title = folderpath_split[5][11:-1]
+experiment_title = folderpath_split[5][10:]
 
 # Set physical constants
 kB = 1.38065e-23
@@ -591,7 +591,7 @@ for file in best_pixels['File_Path']:
 
     plt.subplot(subplot_rows, subplot_cols, i)
     plt.axhline(0, lw=0.5, c='black')
-    plt.title(str(variables[i - 1] + ', ' + values[i - 1]), fontsize=8)
+    plt.title(str(variables[i - 1]) + ', ' + str(values[i - 1]), fontsize=8)
     plt.plot(JV_light_LH_data[:, 0],
              JV_light_LH_data[:, 1],
              label='L->H',
