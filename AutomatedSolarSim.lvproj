@@ -14,6 +14,7 @@
 		<Item Name="Add Data to EQE Log File.vi" Type="VI" URL="../SubVIs/Add Data to EQE Log File.vi"/>
 		<Item Name="Add light-dark J-t measurements to queue.vi" Type="VI" URL="../SubVIs/Add light-dark J-t measurements to queue.vi"/>
 		<Item Name="Add light-dark measurements to queue.vi" Type="VI" URL="../SubVIs/Add light-dark measurements to queue.vi"/>
+		<Item Name="Add mppt data to log file.vi" Type="VI" URL="../SubVIs/Add mppt data to log file.vi"/>
 		<Item Name="Add repeat light measurements to queue.vi" Type="VI" URL="../SubVIs/Add repeat light measurements to queue.vi"/>
 		<Item Name="Automated JV Measurement.vi" Type="VI" URL="../Automated JV Measurement.vi"/>
 		<Item Name="Build meas status string.vi" Type="VI" URL="../SubVIs/Build meas status string.vi"/>
