@@ -18,13 +18,13 @@ from scipy import signal
 
 # Choose folder containing data and log file path. Remember to use all forward
 # slashes
-folderpath = r'C:/SolarSimData/James B/2017/01-Jan/21-01-2017 Test/J-V/'
+folderpath = r'C:/SolarSimData/Carlo/2017/01-Jan/1-23-2017 EQE and IntensityDependanceZnO_PFN_BCP/'
 folderpath_jv = 'J-V/'
 folderpath_time = 'Time Dependence/'
 folderpath_maxp = 'Max P Stabilisation/'
 folderpath_intensity = 'Intensity Dependence/'
 folderpath_eqe = 'EQE/'
-filepath_jv = r'TEST_LOG.txt'
+filepath_jv = r'EQE AND INTENSITYDEPENDANCEZNO_PFN_BCP_LOG.txt'
 filepath_eqe = r'_EQE_LOG.txt'
 log_file_jv = folderpath + folderpath_jv + filepath_jv
 
@@ -60,7 +60,8 @@ data = pd.read_csv(log_file_jv,
 # column indicating the scan number.
 scan_num = []
 for path in data['File_Path']:
-    scan_num.append(path.split('_')[4].strip('scan').strip('.txt'))
+    scan_i = path.find('scan', len(path) - 12)
+    scan_num.append(path[scan_i:].strip('scan').strip('.txt'))
 data['scan_num'] = pd.Series(scan_num, index=data.index)
 
 
@@ -213,18 +214,19 @@ for name, group in group_var_f:
 yields_var = []
 i = 0
 j = 0
-for name_var, length_var in zip(names_var_s, len_var_s):
+for name_var_s, length_var_s in zip(names_var_s, len_var_s):
     yields_val = []
-    if name_var in names_var_f:
-        for name, length in zip(name_var, length_var):
-            if name in names_var_f[j]:
-                yields_val.append(len_var_f[j][i] * 100 / length)
+    if name_var_s in names_var_f:
+        i = 0
+        for names, lengths in zip(name_var_s, length_var_s):
+            if names in names_var_f[j]:
+                yields_val.append(len_var_f[j][i] * 100 / lengths)
                 i += 1
             else:
                 yields_val.append(0)
         j += 1
     else:
-        yields_var.append(0 * len(name_var))
+        yields_var.append(0 * len(name_var_s))
     yields_var.append(yields_val)
 
 yields_var_lab = []
@@ -233,6 +235,7 @@ j = 0
 for name_var_lab, length_var_lab in zip(names_var_lab_s, len_var_lab_s):
     yields_lab = []
     if name_var_lab in names_var_lab_f:
+        i = 0
         for name, length in zip(name_var_lab, length_var_lab):
             if name in names_var_lab_f[j]:
                 yields_lab.append(len_var_lab_f[j][i] * 100 / length)
@@ -1226,6 +1229,8 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
         plt.legend(loc='lower center', fontsize=7)
         plt.xlabel('Wavelength (nm)', fontsize=9)
         plt.ylabel('EQE (%)', fontsize=9)
+        plt.xlim([np.min(data[:, 0]), np.max(data[:, 0])])
+        plt.ylim([0, 100])
         plt.title(
             str(label) + ', ' + str(variable) + ', ' + str(value),
             fontsize=8)
@@ -1351,7 +1356,7 @@ table.cell(0, 5).text = 'Top electrode'
 
 # fill in label column
 i = 1
-for item in sorted_data['Label'].unique():
+for item in sorted(sorted_data['Label'].unique()):
     table.cell(i, 0).text = str(item)
     i += 1
 
