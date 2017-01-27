@@ -988,16 +988,16 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
                               'Scan_direction', 'Intensity'])
     sorted_data_int = data.sort_values(['Label', 'Pixel', 'Intensity', 'PCE'],
                                        ascending=[True, True, True, False])
-    filtered_data_HL = sorted_data_int[(
+    filtered_data_int_HL = sorted_data_int[(
         sorted_data_int.Scan_direction == 'HL')]
-    filtered_data_LH = sorted_data_int[(
+    filtered_data_int_LH = sorted_data_int[(
         sorted_data_int.Scan_direction == 'LH')]
-    filtered_data_HL = filtered_data_HL.drop_duplicates(
+    filtered_data_int_HL = filtered_data_int_HL.drop_duplicates(
         ['Label', 'Pixel', 'Intensity'])
-    filtered_data_LH = filtered_data_LH.drop_duplicates(
+    filtered_data_int_LH = filtered_data_int_LH.drop_duplicates(
         ['Label', 'Pixel', 'Intensity'])
-    group_by_label_pixel_HL = filtered_data_HL.groupby(['Label', 'Pixel'])
-    group_by_label_pixel_LH = filtered_data_LH.groupby(['Label', 'Pixel'])
+    group_by_label_pixel_HL = filtered_data_int_HL.groupby(['Label', 'Pixel'])
+    group_by_label_pixel_LH = filtered_data_int_LH.groupby(['Label', 'Pixel'])
 
     # Plot intensity dependent JV curve parameters
     for ng_HL, ng_LH in zip(group_by_label_pixel_HL, group_by_label_pixel_LH):
@@ -1196,7 +1196,7 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
                        delimiter='\t',
                        header=0,
                        names=['Label', 'Pixel', 'Variable', 'Value',
-                              'Position', 'Jsc', 'Mismatch', 'Area',
+                              'Position', 'Int_Jsc', 'Mismatch', 'Area',
                               'Frequency', 'File_Path'])
     sorted_data_eqe = data.sort_values(['Label', 'Pixel', 'Jsc'],
                                        ascending=[True, True, False])
