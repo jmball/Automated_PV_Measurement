@@ -1,6 +1,7 @@
 # Figures can be saved either to pdf or pptx (or both). Comment out
 # lines as appropriate.
 
+import itertools
 import os
 from datetime import date, timedelta
 from functools import reduce
@@ -154,13 +155,26 @@ filtered_data = filtered_data.drop_duplicates(['Label', 'Pixel'])
 filtered_data_HL = filtered_data_HL.drop_duplicates(['Label', 'Pixel'])
 filtered_data_LH = filtered_data_LH.drop_duplicates(['Label', 'Pixel'])
 
-# Drop pixels only working in one scan direction
-filtered_data_HL = filtered_data_HL[filtered_data_HL.Label.isin(
-    filtered_data_LH.Label.values) & filtered_data_HL.Pixel.isin(
-        filtered_data_LH.Pixel.values)]
-filtered_data_LH = filtered_data_LH[filtered_data_LH.Label.isin(
-    filtered_data_HL.Label.values) & filtered_data_LH.Pixel.isin(
-        filtered_data_HL.Pixel.values)]
+# Drop pixels only working in one scan direction.
+# First get the inner merge of the Label and Pixel columns, i.e. drop rows
+# where label and pixel combination only occurs in one scan direction.
+filtered_data_HL_t = filtered_data_HL[['Label', 'Pixel']].merge(
+    filtered_data_LH[['Label', 'Pixel']],
+    on=['Label', 'Pixel'],
+    how='inner')
+filtered_data_LH_t = filtered_data_LH[['Label', 'Pixel']].merge(
+    filtered_data_HL[['Label', 'Pixel']],
+    on=['Label', 'Pixel'],
+    how='inner')
+# Then perform inner merge of full filtered data frames with the merged
+# label and pixel dataframes to get back all pixel data that works in both
+# scan directions
+filtered_data_HL = filtered_data_HL.merge(filtered_data_HL_t,
+                                          on=['Label', 'Pixel'],
+                                          how='inner')
+filtered_data_LH = filtered_data_LH.merge(filtered_data_LH_t,
+                                          on=['Label', 'Pixel'],
+                                          how='inner')
 
 # Calculate proportion of working pixels.
 group_var_s = sorted_data.drop_duplicates(['Label', 'Pixel'])
@@ -734,7 +748,7 @@ def exp_file_list(folderpath):
     if os.path.exists(folderpath):
         exists = True
         for f in os.listdir(folderpath):
-            if f.endswith('.txt'):
+            if (f.endswith('.txt')) & (f.find('_LOG.txt') == -1):
                 files.append(folderpath + f)
                 files_split.append(f.split('_'))
         if len(files) == 0:
@@ -757,6 +771,7 @@ def build_log_df(exp_files, master_log):
     pixels = []
     scan_dir = []
     for item in exp_files['files_split']:
+        print(item)
         labels.append(item[0])
         pixels.append(item[1])
         scan_dir.append(item[3])
@@ -1198,8 +1213,22 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
                        names=['Label', 'Pixel', 'Variable', 'Value',
                               'Position', 'Int_Jsc', 'Mismatch', 'Area',
                               'Frequency', 'File_Path'])
-    sorted_data_eqe = data.sort_values(['Label', 'Pixel', 'Jsc'],
-                                       ascending=[True, True, False])
+    sorted_data_eqe = data.sort_values(
+        ['Variable', 'Value', 'Label', 'Pixel', 'Int_Jsc'],
+        ascending=[True, True, True, True, False])
+    sorted_data_eqe = sorted_data_eqe.drop_duplicates(['Label', 'Pixel'])
+    filtered_data_HL_temp = pd.merge(filtered_data_HL,
+                                     sorted_data_eqe,
+                                     on=['Label', 'Pixel'],
+                                     how='inner')
+    filtered_data_LH_temp = pd.merge(filtered_data_LH,
+                                     sorted_data_eqe,
+                                     on=['Label', 'Pixel'],
+                                     how='inner')
+    sorted_data_eqe_HL = sorted_data_eqe
+    sorted_data_eqe_LH = sorted_data_eqe
+    sorted_data_eqe_HL['SS_Jsc'] = list(filtered_data_HL_temp['Jsc'])
+    sorted_data_eqe_LH['SS_Jsc'] = list(filtered_data_LH_temp['Jsc'])
     grouped_by_label = sorted_data_eqe.groupby(['Label'])
 
     i = 0
@@ -1242,6 +1271,44 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
             images.append(image_path)
             pp.savefig()
         i += 1
+
+# Plot graph of measured Jsc against integrated Jsc
+    marker = itertools.cycle((',', 'D', 'x', 'o', '*', '^'))
+    color = itertools.cycle(
+        ('black', 'blue', 'red', 'green', 'purple', 'magenta', 'cyan'))
+
+    plt.figure(figsize=(A4_width, A4_height), dpi=300)
+    plt.suptitle('Measured vs. Integrated Jsc', fontsize=10, fontweight='bold')
+    zipped = zip(sorted_data_eqe_HL['Label'], sorted_data_eqe_HL['Pixel'],
+                 sorted_data_eqe_HL['SS_Jsc'], sorted_data_eqe_HL['Int_Jsc'],
+                 sorted_data_eqe_LH['Label'], sorted_data_eqe_LH['Pixel'],
+                 sorted_data_eqe_LH['SS_Jsc'], sorted_data_eqe_LH['Int_Jsc'])
+    for label_HL, pixel_HL, ss_jsc_HL, int_jsc_HL, label_LH, pixel_LH, ss_jsc_LH, int_jsc_LH in zipped:
+        plt.scatter(
+            ss_jsc_HL,
+            int_jsc_HL,
+            label=(str(label_HL) + ', pixel ' + str(pixel_HL) + ', H->L'),
+            marker=next(marker),
+            s=30,
+            c=next(color))
+        plt.scatter(
+            ss_jsc_LH,
+            int_jsc_LH,
+            label=(str(label_LH) + ', pixel ' + str(pixel_LH) + ', L->H'),
+            marker=next(marker),
+            s=30,
+            c=next(color))
+    plt.plot(sorted_data_eqe_HL['SS_Jsc'],
+             sorted_data_eqe_HL['SS_Jsc'],
+             c='black',
+             label='Int Jsc = SS Jsc')
+    plt.legend(loc='upper left', scatterpoints=1, fontsize=9)
+    plt.xlabel('Solar simulator Jsc (mA/cm^2)', fontsize=9)
+    plt.ylabel('Integrated Jsc from EQE (mA/cm^2)', fontsize=9)
+    image_path = log_file_jv.replace('.txt', '_EQE_Jscs' + '.png')
+    plt.savefig(image_path)
+    images.append(image_path)
+    pp.savefig()
 
 # Get weather data and add to dataframe
 weather_data_path = r'C:/SolarSimData/WeatherData/WxLog.csv'
