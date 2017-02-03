@@ -19,13 +19,13 @@ from scipy import signal
 
 # Choose folder containing data and log file path. Remember to use all forward
 # slashes
-folderpath = r'C:/SolarSimData/Carlo/2017/01-Jan/1-23-2017 EQE and IntensityDependanceZnO_PFN_BCP/'
+folderpath = r'C:/SolarSimData/Marina/2017/01-Jan/1-28-2017 CsPbBr3 substitution with SnI4/'
 folderpath_jv = 'J-V/'
 folderpath_time = 'Time Dependence/'
 folderpath_maxp = 'Max P Stabilisation/'
 folderpath_intensity = 'Intensity Dependence/'
 folderpath_eqe = 'EQE/'
-filepath_jv = r'EQE AND INTENSITYDEPENDANCEZNO_PFN_BCP_LOG.txt'
+filepath_jv = r'CSPBBR3 SUBSTITUTION WITH SNI4_LOG.txt'
 filepath_eqe = r'_EQE_LOG.txt'
 log_file_jv = folderpath + folderpath_jv + filepath_jv
 
@@ -166,6 +166,7 @@ filtered_data_LH_t = filtered_data_LH[['Label', 'Pixel']].merge(
     filtered_data_HL[['Label', 'Pixel']],
     on=['Label', 'Pixel'],
     how='inner')
+
 # Then perform inner merge of full filtered data frames with the merged
 # label and pixel dataframes to get back all pixel data that works in both
 # scan directions
@@ -177,89 +178,62 @@ filtered_data_LH = filtered_data_LH.merge(filtered_data_LH_t,
                                           how='inner')
 
 # Calculate proportion of working pixels.
+# Create groups of all and working pixels from complete and filtered
+# dataframes.
 group_var_s = sorted_data.drop_duplicates(['Label', 'Pixel'])
 group_var_s = group_var_s.groupby(['Variable'])
-names_var_s = []
-len_var_s = []
-names_var_lab_s = []
-len_var_lab_s = []
-for name, group in group_var_s:
-    group_val_s = group.groupby(['Value'])
-    group_lab_s = group.groupby(['Label'])
-    names_val_s = []
-    len_val_s = []
-    names_lab_s = []
-    len_lab_s = []
-    for name, group in group_val_s:
-        names_val_s.append(name)
-        len_val_s.append(len(group))
-    for name, group in group_lab_s:
-        names_lab_s.append(name)
-        len_lab_s.append(len(group))
-    names_var_s.append(names_val_s)
-    len_var_s.append(len_val_s)
-    names_var_lab_s.append(names_lab_s)
-    len_var_lab_s.append(len_lab_s)
-
 group_var_f = filtered_data_HL.drop_duplicates(['Label', 'Pixel'])
 group_var_f = group_var_f.groupby(['Variable'])
-names_var_f = []
-len_var_f = []
-names_var_lab_f = []
-len_var_lab_f = []
-for name, group in group_var_f:
-    group_val_f = group.groupby(['Value'])
-    group_lab_f = group.groupby(['Label'])
-    names_val_f = []
-    len_val_f = []
-    names_lab_f = []
-    len_lab_f = []
-    for name, group in group_val_f:
-        names_val_f.append(name)
-        len_val_f.append(len(group))
-    for name, group in group_lab_f:
-        names_lab_f.append(name)
-        len_lab_f.append(len(group))
-    names_var_f.append(names_val_f)
-    len_var_f.append(len_val_f)
-    names_var_lab_f.append(names_lab_f)
-    len_var_lab_f.append(len_lab_f)
 
+# For each variable, if there are any working pixels for that variable
+# calculate the yield for each value of the variable if there are any working
+# pixels for that value. Else add zeros. Also, make a list of names
+# for each variable to use as the x-axis on bar charts.
 yields_var = []
-i = 0
-j = 0
-for name_var_s, length_var_s in zip(names_var_s, len_var_s):
-    yields_val = []
-    if name_var_s in names_var_f:
-        i = 0
-        for names, lengths in zip(name_var_s, length_var_s):
-            if names in names_var_f[j]:
-                yields_val.append(len_var_f[j][i] * 100 / lengths)
-                i += 1
+names_yield_var = []
+for var_key in list(group_var_s.groups.keys()):
+    group_val_s = group_var_s.get_group(var_key).groupby(['Value'])
+    if var_key in list(group_var_f.groups.keys()):
+        group_val_f = group_var_f.get_group(var_key).groupby(['Value'])
+        yields_val = []
+        names_yield_val = []
+        for val_key in list(group_val_s.groups.keys()):
+            names_yield_val.append(val_key)
+            if val_key in list(group_val_f.groups.keys()):
+                yields_val.append(len(group_val_f.get_group(val_key)) * 100 /
+                                  8)
             else:
                 yields_val.append(0)
-        j += 1
+        yields_var.append(yields_val)
+        names_yield_var.append(names_yield_val)
     else:
-        yields_var.append(0 * len(name_var_s))
-    yields_var.append(yields_val)
+        yields_var.append([0] * len(group_val_s))
+        names_yield_var.append(list(group_val_s.groups.keys()))
 
+# For each variable, if there are any working pixels for that variable
+# calculate the yield for each label if there are any working
+# pixels for that label. Else add zeros. Also, make a list of names
+# for each variable to use as the x-axis on bar charts.
 yields_var_lab = []
-i = 0
-j = 0
-for name_var_lab, length_var_lab in zip(names_var_lab_s, len_var_lab_s):
-    yields_lab = []
-    if name_var_lab in names_var_lab_f:
-        i = 0
-        for name, length in zip(name_var_lab, length_var_lab):
-            if name in names_var_lab_f[j]:
-                yields_lab.append(len_var_lab_f[j][i] * 100 / length)
-                i += 1
+names_yield_var_lab = []
+for var_key in list(group_var_s.groups.keys()):
+    group_lab_s = group_var_s.get_group(var_key).groupby(['Label'])
+    if var_key in list(group_var_f.groups.keys()):
+        group_lab_f = group_var_f.get_group(var_key).groupby(['Label'])
+        yields_lab = []
+        names_yield_lab = []
+        for lab_key in list(group_lab_s.groups.keys()):
+            names_yield_lab.append(lab_key)
+            if lab_key in list(group_lab_f.groups.keys()):
+                yields_lab.append(len(group_lab_f.get_group(lab_key)) * 100 /
+                                  8)
             else:
                 yields_lab.append(0)
-        j += 1
+        yields_var_lab.append(yields_lab)
+        names_yield_var_lab.append(names_yield_lab)
     else:
-        yields_lab.append(0 * len(name_var_lab))
-    yields_var_lab.append(yields_lab)
+        yields_var_lab.append([0] * len(group_lab_s))
+        names_yield_var_lab.append(list(group_lab_s.groups.keys()))
 
 # To generate box plots the data needs to be grouped first by variable
 grouped_by_var_HL = filtered_data_HL.groupby('Variable')
@@ -442,9 +416,7 @@ for i in range(len(boxplotdata_HL['var_names'])):
             width=0.25,
             edgecolor='black',
             color='green')
-        plt.xticks(
-            range(len(yields_var[i])),
-            boxplotdata_HL['names_var'][i], rotation=45)
+        plt.xticks(range(len(yields_var[i])), names_yield_var[i], rotation=45)
         plt.ylabel('Yield (%)')
         plt.ylim([0, 102])
         plt.subplot(2, 2, 4)
@@ -457,7 +429,7 @@ for i in range(len(boxplotdata_HL['var_names'])):
             color='green')
         plt.xticks(
             range(len(yields_var_lab[i])),
-            names_var_lab_s[i],
+            names_yield_var_lab[i],
             rotation=45)
         plt.ylabel('Yield (%)')
         plt.ylim([0, 102])
