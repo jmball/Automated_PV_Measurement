@@ -1,5 +1,5 @@
-# Figures can be saved either to pdf or pptx (or both). Comment out
-# lines as appropriate.
+# This script takes the measurement log files and loads them as Pandas
+# DataFrames for manipulation ready for plotting.
 
 import itertools
 import os
@@ -11,11 +11,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy as sp
-from matplotlib import gridspec
+from matplotlib import axes, gridspec
 from matplotlib.backends.backend_pdf import PdfPages
 from pptx import Presentation
 from pptx.util import Inches
-from scipy import signal
+from scipy import signal, constants
+
+from reportgenlib import create_figure, save_image, set_axes_props
+
+# Bind the set_axes_props method to the matplotlib.axes.SubplotBase class
+axes.SubplotBase.set_axes_props = set_axes_props
 
 # Choose folder containing data and log file path. Remember to use all forward
 # slashes
@@ -33,12 +38,15 @@ log_file_jv = folderpath + folderpath_jv + filepath_jv
 # the report.
 folderpath_split = folderpath.split('/')
 username = folderpath_split[2]
-exp_date = folderpath_split[5][0:10]
-experiment_title = folderpath_split[5][10:]
+date_title_split = folderpath_split[5].split(' ')
+exp_date = date_title_split[0]
+experiment_title = ' '.join(date_title_split[1:])
 
 # Set physical constants
-kB = 1.38065e-23
-q = 1.60218e-19
+kB = sp.constants.Boltzmann
+q = sp.constants.elementary_charge
+c = sp.constants.speed_of_light
+h = sp.constants.Planck
 T = 300
 
 # Initialise empty list for storing image file paths
