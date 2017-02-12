@@ -1,6 +1,7 @@
 # This script takes the measurement log files and loads them as Pandas
 # DataFrames for manipulation ready for plotting.
 
+import argparse
 import itertools
 import os
 from datetime import date, timedelta
@@ -19,20 +20,34 @@ from scipy import constants, signal
 
 import reportgenlib as rgl
 
-# Bind subplot formatting methods to the matplotlib.axes.Axes class.
+# Bind subplot formatting methods in reportgenlib to the matplotlib.axes.Axes
+# class.
 axes.Axes.set_axes_props = rgl.set_axes_props
 axes.Axes.subboxplot = rgl.subboxplot
 axes.Axes.subbarchart = rgl.subbarchart
 
+# Parse folder path and log file name from command line arguments.
+parser = argparse.ArgumentParser(description='Process data files')
+parser.add_argument(
+    'folder_path',
+    metavar='folder_path',
+    type=str,
+    help='Absolute path to the folder containing all of the experimental data')
+parser.add_argument('log_file_name',
+                    metavar='log_file_name',
+                    type=str,
+                    help='Name of the master J-V log file')
+args = parser.parse_args()
+
 # Set folder/file paths for data and log files. Remember to always use forward
 # slashes for paths.
-folderpath = r'C:/SolarSimData/Marina/2017/01-Jan/1-28-2017 CsPbBr3 substitution with SnI4/'
+folderpath = args.folder_path
 folderpath_jv = 'J-V/'
 folderpath_time = 'Time Dependence/'
 folderpath_maxp = 'Max P Stabilisation/'
 folderpath_intensity = 'Intensity Dependence/'
 folderpath_eqe = 'EQE/'
-filepath_jv = r'CSPBBR3 SUBSTITUTION WITH SNI4_LOG.txt'
+filepath_jv = args.log_file_name
 filepath_eqe = r'_EQE_LOG.txt'
 log_file_jv = folderpath + folderpath_jv + filepath_jv
 log_file_time = folderpath + folderpath_time + filepath_jv
