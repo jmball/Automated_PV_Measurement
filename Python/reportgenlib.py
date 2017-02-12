@@ -6,9 +6,9 @@ import numpy as np
 from matplotlib import gridspec
 
 
-def create_figure(title,
-                  rows,
+def create_figure(rows,
                   cols,
+                  title=None,
                   width=10,
                   height=7.5,
                   dpi=300,
@@ -29,7 +29,8 @@ def create_figure(title,
     """
 
     fig = plt.figure(figsize=(width, height), dpi=dpi)
-    fig.suptitle(title, fontsize=title_fsize, fontweight=title_fweight)
+    if title is not None:
+        fig.suptitle(title, fontsize=title_fsize, fontweight=title_fweight)
     gs = gridspec.GridSpec(rows, cols)
     return fig, gs
 
@@ -103,53 +104,64 @@ def subbarchart(self, x, y, names):
 
 
 def set_axes_props(self,
-                   plot_title,
-                   axis_fsize=10,
-                   leg_loc='best',
+                   title_fsize=10,
+                   title=None,
+                   xlabel=None,
+                   xscale=None,
+                   ylabel=None,
+                   yscale=None,
+                   xlim=None,
+                   ylim=None,
+                   axhline=None,
+                   axvline=None,
+                   xticks=None,
+                   yticks=None,
+                   xticklabels=None,
+                   yticklabels=None,
+                   legend=False,
+                   loc='best',
                    scatterpoints=1,
-                   leg_fsize=7,
-                   **options):
+                   fontsize=8):
     """
     Function for setting several properties of the axes of a matplotlib subplot
     at once.
 
-    **options is a dictionary that contains details of optional properties that
-    can be formatted. The keys for these options can only be: 'xlabel',
-    'ylabel', 'xscale', 'yscale', 'xlim', 'ylim', 'axhline', 'axvline',
-    'xticks', 'xticklabels', 'yticks', 'yticklabels'. See
-    http://matplotlib.org/api/axes_api.html for further details.
+    See http://matplotlib.org/api/axes_api.html for further details of each
+    option.
 
     This function will be bound to the matplotlib.axes.SubplotBase class as
     a new method for instances of the class. It should only be called when
     binding the method and then only as a method of SubplotBase objects.
     """
 
-    if ('xlabel' in options):
-        self.set_xlabel(options['xlabel'])
-    if ('ylabel' in options):
-        self.set_ylabel(options['ylabel'])
-    if ('xscale' in options):
-        self.set_xscale(options['xscale'])
-    if ('yscale' in options):
-        self.set_yscale(options['yscale'])
-    if ('xlim' in options):
-        self.set_xlim(options['xlim'])
-    if ('ylim' in options):
-        self.set_ylim(options['ylim'])
-    if ('axhline' in options):
-        self.axhline(options['axhline'], lw=0.5, c='black')
-    if ('axvline' in options):
-        self.axvline(options['axvline'], lw=0.5, c='black')
-    if ('xticks' in options):
-        self.set_xticks(options['xticks'])
-    if ('xticklabels' in options):
-        self.set_xticklabels(options['xticklabels'])
-    if ('yticks' in options):
-        self.set_yticks(options['yticks'])
-    if ('yticklabels' in options):
-        self.set_yticklabels(options['yticklabels'])
-    self.set_title(plot_title, fontsize=axis_fsize)
-    self.legend(loc=leg_loc, scatterpoints=scatterpoints, fontsize=leg_fsize)
+    if xlabel is not None:
+        self.set_xlabel(xlabel)
+    if ylabel is not None:
+        self.set_ylabel(ylabel)
+    if xscale is not None:
+        self.set_xscale(xscale)
+    if yscale is not None:
+        self.set_yscale(yscale)
+    if xlim is not None:
+        self.set_xlim(xlim)
+    if ylim is not None:
+        self.set_ylim(ylim)
+    if axhline is not None:
+        self.axhline(axhline, lw=0.5, c='black')
+    if axvline is not None:
+        self.axvline(axvline, lw=0.5, c='black')
+    if xticks is not None:
+        self.set_xticks(xticks)
+    if xticklabels is not None:
+        self.set_xticklabels(xticklabels)
+    if yticks is not None:
+        self.set_yticks(yticks)
+    if yticklabels is not None:
+        self.set_yticklabels(yticklabels)
+    if legend is True:
+        self.legend(loc=loc, fontsize=fontsize, scatterpoints=scatterpoints)
+    if title is not None:
+        self.set_title(title, fontsize=title_fsize)
 
 
 def save_image(gs, fig, image_path, wspace, hspace):
