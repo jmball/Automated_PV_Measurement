@@ -15,15 +15,17 @@ from matplotlib import axes, gridspec
 from matplotlib.backends.backend_pdf import PdfPages
 from pptx import Presentation
 from pptx.util import Inches
-from scipy import signal, constants
+from scipy import constants, signal
 
-from reportgenlib import create_figure, save_image, set_axes_props
+import reportgenlib as rgl
 
-# Bind the set_axes_props method to the matplotlib.axes.SubplotBase class
-axes.SubplotBase.set_axes_props = set_axes_props
+# Bind subplot formatting methods to the matplotlib.axes.Axes class.
+axes.Axes.set_axes_props = rgl.set_axes_props
+axes.Axes.subboxplot = rgl.subboxplot
+axes.Axes.subbarchart = rgl.subbarchart
 
-# Choose folder containing data and log file path. Remember to use all forward
-# slashes
+# Set folder/file paths for data and log files. Remember to always use forward
+# slashes for paths.
 folderpath = r'C:/SolarSimData/Marina/2017/01-Jan/1-28-2017 CsPbBr3 substitution with SnI4/'
 folderpath_jv = 'J-V/'
 folderpath_time = 'Time Dependence/'
@@ -33,9 +35,13 @@ folderpath_eqe = 'EQE/'
 filepath_jv = r'CSPBBR3 SUBSTITUTION WITH SNI4_LOG.txt'
 filepath_eqe = r'_EQE_LOG.txt'
 log_file_jv = folderpath + folderpath_jv + filepath_jv
+log_file_time = folderpath + folderpath_time + filepath_jv
+log_file_maxp = folderpath + folderpath_maxp + filepath_jv
+log_file_intensity = folderpath + folderpath_intensity + filepath_jv
+log_file_eqe = folderpath + folderpath_eqe + filepath_jv
 
-# Get username, date, and experiment title from file path for title page of
-# the report.
+# Get username, date, and experiment title from folderpath for the title page
+# of the powerpoint version of the report.
 folderpath_split = folderpath.split('/')
 username = folderpath_split[2]
 date_title_split = folderpath_split[5].split(' ')
@@ -43,10 +49,10 @@ exp_date = date_title_split[0]
 experiment_title = ' '.join(date_title_split[1:])
 
 # Set physical constants
-kB = sp.constants.Boltzmann
-q = sp.constants.elementary_charge
-c = sp.constants.speed_of_light
-h = sp.constants.Planck
+kB = constants.Boltzmann
+q = constants.elementary_charge
+c = constants.speed_of_light
+h = constants.Planck
 T = 300
 
 # Initialise empty list for storing image file paths
@@ -358,8 +364,6 @@ def subboxplot(boxplotdata_HL, boxplotdata_LH, p, unit, i):
         plt.ylim(ymin=0)
 
 # Scale figures to a landscape A4 page in inches
-# A4_height = 8.27
-# A4_width = 11.69
 A4_height = 7.5
 A4_width = 10
 
