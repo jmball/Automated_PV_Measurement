@@ -28,8 +28,8 @@ axes.Axes.subbarchart = rgl.subbarchart
 
 # Parse folder path and log file name from command line arguments.
 # Remember to include the "python" keyword before the call to the python file
-# from the command line, e.g. python test.py "arg1" "arg2". Folder paths must
-# use forward slashes to separate subfolders.
+# from the command line, e.g. python example.py "arg1" "arg2". Folder paths
+# must use forward slashes to separate subfolders.
 parser = argparse.ArgumentParser(description='Process data files')
 parser.add_argument(
     'folder_path',
