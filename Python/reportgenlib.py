@@ -41,6 +41,7 @@ def subboxplot(self,
                scatter_x,
                label_HL,
                label_LH,
+               set_yscale='linear',
                showfliers=False,
                boxprops_HL=dict(color='blue'),
                whiskerprops_HL=dict(color='blue', linestyle='-'),
@@ -72,7 +73,7 @@ def subboxplot(self,
                  whiskerprops=whiskerprops_LH,
                  capprops=capprops_LH,
                  medianprops=medianprops_LH)
-    self.xticks(rotation=45, ha='right')
+    self.set_xticklabels(label_HL, rotation=45, ha='right')
     self.scatter(scatter_x,
                  np.concatenate(boxplotdata_HL),
                  c='blue',
@@ -83,6 +84,7 @@ def subboxplot(self,
                  c='red',
                  marker='x',
                  label='L->H')
+    self.set_yscale(set_yscale)
 
 
 def subbarchart(self, x, y, names):
@@ -100,7 +102,7 @@ def subbarchart(self, x, y, names):
              width=0.25,
              edgecolor='black',
              color='green')
-    self.xticks(x, names, rotation=45)
+    self.set_xticklabels(names, rotation=45)
 
 
 def set_axes_props(self,

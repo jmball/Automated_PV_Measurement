@@ -1,5 +1,5 @@
 # This script takes the measurement log files and loads them as Pandas
-# DataFrames for manipulation ready for plotting.
+# DataFrames for manipulation and then plotting.
 
 import argparse
 import itertools
@@ -27,6 +27,9 @@ axes.Axes.subboxplot = rgl.subboxplot
 axes.Axes.subbarchart = rgl.subbarchart
 
 # Parse folder path and log file name from command line arguments.
+# Remember to include the "python" keyword before the call to the python file
+# from the command line, e.g. python test.py "arg1" "arg2". Folder paths must
+# use forward slashes to separate subfolders.
 parser = argparse.ArgumentParser(description='Process data files')
 parser.add_argument(
     'folder_path',
@@ -121,8 +124,8 @@ def extra_JV_analysis(filepath, Jsc, Vmp, Voc, Area):
     else:
         Voc_i = np.where(V == -Voc)
 
-# Convert current density (in mA/cm^2) to current (in A) for diode
-# equivalent circuit fitting
+    # Convert current density (in mA/cm^2) to current (in A) for diode
+    # equivalent circuit fitting
     I = JV[:, 1] * Area / 1000
     IV = np.column_stack((JV[:, 0], I))
 
@@ -770,7 +773,6 @@ def build_log_df(exp_files, master_log):
     pixels = []
     scan_dir = []
     for item in exp_files['files_split']:
-        print(item)
         labels.append(item[0])
         pixels.append(item[1])
         scan_dir.append(item[3])
