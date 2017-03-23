@@ -9,8 +9,8 @@ from matplotlib import gridspec
 def create_figure(rows,
                   cols,
                   title=None,
-                  width=10,
-                  height=7.5,
+                  width=4.75,
+                  height=3.5625,
                   dpi=300,
                   title_fsize=10,
                   title_fweight='bold'):
