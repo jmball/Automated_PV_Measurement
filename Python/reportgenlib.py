@@ -102,6 +102,7 @@ def subbarchart(self, x, y, names):
              width=0.25,
              edgecolor='black',
              color='green')
+    self.set_xticks(x)
     self.set_xticklabels(names, rotation=45)
 
 
