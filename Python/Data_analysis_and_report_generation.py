@@ -5,18 +5,16 @@ import argparse
 import itertools
 import os
 from datetime import date, timedelta
-from functools import reduce
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy as sp
-from matplotlib import axes, gridspec
-from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib import axes
 from pptx import Presentation
 from pptx.util import Inches
-from scipy import constants, signal
+from scipy import constants
 
 import reportgenlib as rgl
 
@@ -42,8 +40,7 @@ parser.add_argument('log_file_name',
                     help='Name of the master J-V log file')
 args = parser.parse_args()
 
-# Set folder/file paths for data and log files. Remember to always use forward
-# slashes for paths.
+# Define folder and file paths
 folderpath = args.folder_path
 folderpath_jv = 'J-V/'
 folderpath_time = 'Time Dependence/'
@@ -57,6 +54,18 @@ log_file_time = folderpath + folderpath_time + filepath_jv
 log_file_maxp = folderpath + folderpath_maxp + filepath_jv
 log_file_intensity = folderpath + folderpath_intensity + filepath_jv
 log_file_eqe = folderpath + folderpath_eqe + filepath_jv
+
+# Create folders for storing files generated during analysis
+analysis_folder = folderpath + 'Analysis/'
+image_folder = analysis_folder + 'Figures/'
+if os.path.exists(analysis_folder):
+    pass
+else:
+    os.makedirs(analysis_folder)
+if os.path.exists(image_folder):
+    pass
+else:
+    os.makedirs(image_folder)
 
 # Get username, date, and experiment title from folderpath for the title page
 # of the powerpoint version of the report.
@@ -73,13 +82,7 @@ c = constants.speed_of_light
 h = constants.Planck
 T = 300
 
-# Initialise empty list for storing image file paths
-images = []
-
-# Create pdf for adding figures
-pp = PdfPages(log_file_jv.replace('.txt', '_summary.pdf'))
-
-# Import log file into a Pandas dataframe
+# Read in data from JV log file
 data = pd.read_csv(log_file_jv,
                    delimiter='\t',
                    header=0,
@@ -89,61 +92,70 @@ data = pd.read_csv(log_file_jv,
                           'File_Path', 'Scan_rate', 'Scan_direction',
                           'Intensity'])
 
-# Get scan number from file path for each row in log file and create new
-# column indicating the scan number.
+# Read scan numbers from file paths and add scan number column
+# to dataframe
 scan_num = []
 for path in data['File_Path']:
     scan_i = path.find('scan', len(path) - 12)
     scan_num.append(path[scan_i:].strip('scan').strip('.txt'))
 data['scan_num'] = pd.Series(scan_num, index=data.index)
 
+# Create a powerpoint presentation to add figures to.
+prs = Presentation()
 
-# Define a function to do extra analysis on the measured JV curves
-def extra_JV_analysis(filepath, Jsc, Vmp, Voc, Area):
-    """
+# Add title page with experiment title, date, and username.
+title_slide_layout = prs.slide_layouts[0]
+slide = prs.slides.add_slide(title_slide_layout)
+title = slide.shapes.title
+subtitle = slide.placeholders[1]
+title.text = experiment_title
+subtitle.text = exp_date + ', ' + username
 
-    Function for quantifying the properties of a solar cell J-V curve beyond
-    the basic Jsc, Voc, FF, and PCE:
+# Add slide with table for manual completion of experimental details.
+blank_slide_layout = prs.slide_layouts[6]
+slide = prs.slides.add_slide(blank_slide_layout)
+shapes = slide.shapes
+rows = 17
+cols = 6
+left = Inches(0.15)
+top = Inches(0.02)
+width = prs.slide_width - Inches(0.25)
+height = prs.slide_height - Inches(0.05)
+table = shapes.add_table(rows, cols, left, top, width, height).table
 
-        - Estimates for the series and shunt resistances from the gradients at
-        open-circuit and short-circuit, respectively.
+# set column widths
+table.columns[0].width = Inches(0.8)
+table.columns[1].width = Inches(1.2)
+table.columns[2].width = Inches(2.0)
+table.columns[3].width = Inches(2.0)
+table.columns[4].width = Inches(2.0)
+table.columns[5].width = Inches(1.7)
 
-    """
+# write column headings
+table.cell(0, 0).text = 'Label'
+table.cell(0, 1).text = 'Substrate'
+table.cell(0, 2).text = 'Bottom contact'
+table.cell(0, 3).text = 'Perovskite'
+table.cell(0, 4).text = 'Top contact'
+table.cell(0, 5).text = 'Top electrode'
 
-    # Import the data
-    JV = np.genfromtxt(filepath, delimiter='\t')
-    JV = JV[~np.isnan(JV).any(axis=1)]
+# Define dimensions used for adding images to slides
+A4_height = 7.5
+A4_width = 10
+height = prs.slide_height * 0.95 / 2
+width = prs.slide_width * 0.95 / 2
 
-    # Get indices of Jsc, Vmp, and Voc in data array
-    V = np.around(JV[:, 0], 2)
-    Voc = np.around(Voc, 2)
-    Vmp = np.around(Vmp, 2)
-    Jsc_i = np.where(V == 0)
-    if Vmp > 0:
-        Voc_i = np.where(V == Voc)
-    else:
-        Voc_i = np.where(V == -Voc)
+# Create dictionaries that define where to put images on slides
+# in the powerpoint presentation.
+lefts = {'0': Inches(0),
+         '1': prs.slide_width - width,
+         '2': Inches(0),
+         '3': prs.slide_width - width}
+tops = {'0': prs.slide_height * 0.05,
+        '1': prs.slide_height * 0.05,
+        '2': prs.slide_height - height,
+        '3': prs.slide_height - height}
 
-    # Convert current density (in mA/cm^2) to current (in A) for diode
-    # equivalent circuit fitting
-    I = JV[:, 1] * Area / 1000
-    IV = np.column_stack((JV[:, 0], I))
-
-    # Estimate Rs and Rsh from gradients
-    dI_dV = np.gradient(IV[:, 1], IV[1, 0] - IV[0, 0])
-    dI_dV_sgfilter = signal.savgol_filter(dI_dV, 15, 3)
-    try:
-        Rs_grad = 1 / dI_dV_sgfilter[Voc_i[0][0]]
-        Rsh_grad = 1 / dI_dV_sgfilter[Jsc_i[0][0]]
-    except IndexError:
-        Rs_grad = 0.1
-        Rsh_grad = 0.1
-
-# if np.size(Rs_grad) == 0:
-#    Rs_grad = np.array([0])
-#    Rsh_grad = np.array([0])
-
-    return [Rs_grad, Rsh_grad]
 
 # Use the extra analysis function to perform extra analysis and create new
 # series for the dataframe
@@ -157,7 +169,7 @@ for i in range(len(data['File_Path'])):
     Voc = data['Voc'][i]
     Area = data['Area'][i]
     if data['Condition'][i] == 'Light':
-        extra_parameters = extra_JV_analysis(new_path, Jsc, Vmp, Voc, Area)
+        extra_parameters = rgl.extra_JV_analysis(new_path, Jsc, Vmp, Voc, Area)
         Rs_grad.append(extra_parameters[0])
         Rsh_grad.append(extra_parameters[1])
     else:
@@ -168,13 +180,17 @@ for i in range(len(data['File_Path'])):
 data['Rs_grad'] = pd.Series(Rs_grad, index=data.index)
 data['Rsh_grad'] = pd.Series(Rsh_grad, index=data.index)
 
-# Save the datafram containing additional analysis as a text file
-data.to_csv(log_file_jv.replace('.txt', '_extra.txt'), sep='\t')
-
-# Sort and filter the data to remove cells that are not working, leaving only
-# best scan for each pixel
+# Sort data
 sorted_data = data.sort_values(['Variable', 'Value', 'Label', 'Pixel', 'PCE'],
                                ascending=[True, True, True, True, False])
+
+# Fill in label column of device info table in ppt
+i = 1
+for item in sorted(sorted_data['Label'].unique()):
+    table.cell(i, 0).text = str(item)
+    i += 1
+
+# Filter data
 filtered_data = sorted_data[(sorted_data.Condition == 'Light') & (
     sorted_data.FF > 0.1) & (sorted_data.FF < 0.9) & (sorted_data.Jsc > 0.01)]
 filtered_data_HL = sorted_data[(sorted_data.Condition == 'Light') & (
@@ -233,7 +249,7 @@ for var_key in list(group_var_s.groups.keys()):
             names_yield_val.append(val_key)
             if val_key in list(group_val_f.groups.keys()):
                 yields_val.append(len(group_val_f.get_group(val_key)) * 100 /
-                                  8)
+                                  len(group_val_s.get_group(val_key)))
             else:
                 yields_val.append(0)
         yields_var.append(yields_val)
@@ -271,119 +287,12 @@ for var_key in list(group_var_s.groups.keys()):
 grouped_by_var_HL = filtered_data_HL.groupby('Variable')
 grouped_by_var_LH = filtered_data_LH.groupby('Variable')
 
-
 # Then it needs to be grouped by variable value. Each of these groupings is
-# appended to a list that is iterated upon later to generate the plots
-def boxplotdata(grouped_by_var):
-    """
-
-    Function for sorting log file data grouped by variable into series for
-    boxplots.
-
-    """
-
-    Jsc_var = []
-    Voc_var = []
-    FF_var = []
-    PCE_var = []
-    Rs_var = []
-    Rsh_var = []
-    names_var = []
-    var_names = []
-    for name, group in grouped_by_var:
-        grouped_by_val = group.groupby('Value')
-        var_names.append(name)
-        Jsc = []
-        Voc = []
-        FF = []
-        PCE = []
-        Rs = []
-        Rsh = []
-        names_val = []
-        for name, group in grouped_by_val:
-            names_val.append(name)
-            Jsc.append(np.array(group['Jsc']))
-            Voc.append(np.array(group['Voc']))
-            FF.append(np.array(group['FF']))
-            PCE.append(np.array(group['PCE']))
-            Rs.append(np.array(group['Rs_grad']))
-            Rsh.append(np.array(group['Rsh_grad']))
-        Jsc_var.append(Jsc)
-        Voc_var.append(Voc)
-        FF_var.append(FF)
-        PCE_var.append(PCE)
-        Rs_var.append(Rs)
-        Rsh_var.append(Rsh)
-        names_var.append(names_val)
-    return {'Jsc_var': Jsc_var,
-            'Voc_var': Voc_var,
-            'FF_var': FF_var,
-            'PCE_var': PCE_var,
-            'Rs_var': Rs_var,
-            'Rsh_var': Rsh_var,
-            'names_var': names_var,
-            'var_names': var_names}
-
+# appended to a list that is iterated upon later to generate the plots.
 # Create variables holding a dictionary for accessing lists of data for
-# boxplots
-boxplotdata_HL = boxplotdata(grouped_by_var_HL)
-boxplotdata_HL['Yield_var'] = yields_var
-boxplotdata_HL['Yield_var_lab'] = yields_var_lab
-boxplotdata_LH = boxplotdata(grouped_by_var_LH)
-
-# Define some properties of the box plots
-boxprops_HL = dict(color='blue')
-boxprops_LH = dict(color='red')
-capprops_HL = dict(color='blue')
-capprops_LH = dict(color='red')
-whiskerprops_HL = dict(color='blue', linestyle='-')
-whiskerprops_LH = dict(color='red', linestyle='-')
-medianprops_HL = dict(color='blue')
-medianprops_LH = dict(color='red')
-
-
-def subboxplot(boxplotdata_HL, boxplotdata_LH, p, unit, i):
-    """
-
-    Make boxplot subplot for a given J-V curve parameter.
-
-    - p = parameter as string e.g. 'Jsc', 'Voc', ...etc.
-    - unit = unit for the parameter  as string e.g. '(mA/cm^2)' etc. The unit
-    should include brackets to ensure the axis label makes sense.
-
-    """
-
-    plt.boxplot(boxplotdata_HL[p + '_var'][i], showfliers=False,
-                labels=boxplotdata_HL['names_var'][i], boxprops=boxprops_HL,
-                whiskerprops=whiskerprops_HL, capprops=capprops_HL,
-                medianprops=medianprops_HL)
-    plt.boxplot(boxplotdata_LH[p + '_var'][i], showfliers=False,
-                labels=boxplotdata_LH['names_var'][i], boxprops=boxprops_LH,
-                whiskerprops=whiskerprops_LH, capprops=capprops_LH,
-                medianprops=medianprops_LH)
-    plt.xticks(rotation=45, ha='right')
-    plt.ylabel(p + ' ' + unit)
-    plt.scatter(x,
-                np.concatenate(boxplotdata_HL[p + '_var'][i]),
-                c='blue',
-                marker='x',
-                label='H->L')
-    plt.scatter(x,
-                np.concatenate(boxplotdata_LH[p + '_var'][i]),
-                c='red',
-                marker='x',
-                label='L->H')
-    plt.legend(loc='lower right', scatterpoints=1, fontsize=7)
-    if p == 'FF':
-        plt.ylim([0, 1])
-    elif (p == 'Rs') or (p == 'Rsh'):
-        plt.yscale('log')
-    else:
-        plt.ylim(ymin=0)
-
-# Scale figures to a landscape A4 page in inches
-A4_height = 7.5
-A4_width = 10
+# boxplots.
+boxplotdata_HL = rgl.boxplotdata(grouped_by_var_HL)
+boxplotdata_LH = rgl.boxplotdata(grouped_by_var_LH)
 
 # Iterate through the lists of grouped data to produce boxplots. Each plot
 # will contain all data from all values of a variable including a 'Control'
@@ -407,83 +316,60 @@ for i in range(len(boxplotdata_HL['var_names'])):
                     0])
                 boxplotdata_HL['Rsh_var'][i].append(boxplotdata_HL['Rsh_var'][
                     j][0])
+
+# Build a list of x values for scatter plots that will overlay
+# boxplots.
         x = []
         for k in range(1, 1 + len(boxplotdata_HL['names_var'][i])):
             x.extend([k] * len(boxplotdata_HL['Jsc_var'][i][k - 1]))
-        plt.figure(i + 2 * i, figsize=(A4_width, A4_height), dpi=300)
-        plt.suptitle(boxplotdata_HL['var_names'][i] + ' basic parameters',
-                     fontsize=14, fontweight='bold')
-        plt.subplot(2, 2, 1)
-        subboxplot(boxplotdata_HL, boxplotdata_LH, 'Jsc', '(mA/cm^2)', i)
-        plt.subplot(2, 2, 2)
-        subboxplot(boxplotdata_HL, boxplotdata_LH, 'Voc', '(V)', i)
-        plt.subplot(2, 2, 3)
-        subboxplot(boxplotdata_HL, boxplotdata_LH, 'FF', '', i)
-        plt.subplot(2, 2, 4)
-        subboxplot(boxplotdata_HL, boxplotdata_LH, 'PCE', '(%)', i)
-        plt.tight_layout()
-        plt.subplots_adjust(top=0.92)
-        image_path = log_file_jv.replace(
-            '.txt',
-            '_' + boxplotdata_HL['var_names'][i] + '_basic_boxplots.png')
-        plt.savefig(image_path)
-        images.append(image_path)
-        pp.savefig()
 
-        plt.figure(i + 1 + 2 * i, figsize=(A4_width, A4_height), dpi=300)
-        plt.suptitle(boxplotdata_HL['var_names'][i] +
-                     ' series and shunt resistances; yields', fontsize=14,
-                     fontweight='bold')
-        plt.subplot(2, 2, 1)
-        subboxplot(boxplotdata_HL, boxplotdata_LH, 'Rs', '(ohms)', i)
-        plt.subplot(2, 2, 2)
-        subboxplot(boxplotdata_HL, boxplotdata_LH, 'Rsh', '(ohms)', i)
-        plt.subplot(2, 2, 3)
-        plt.bar(
-            range(len(yields_var[i])),
-            yields_var[i],
-            align='center',
-            width=0.25,
-            edgecolor='black',
-            color='green')
-        plt.xticks(range(len(yields_var[i])), names_yield_var[i], rotation=45)
-        plt.ylabel('Yield (%)')
-        plt.ylim([0, 102])
-        plt.subplot(2, 2, 4)
-        plt.bar(
-            range(len(yields_var_lab[i])),
-            yields_var_lab[i],
-            align='center',
-            width=0.25,
-            edgecolor='black',
-            color='green')
-        plt.xticks(
-            range(len(yields_var_lab[i])),
-            names_yield_var_lab[i],
-            rotation=45)
-        plt.ylabel('Yield (%)')
-        plt.ylim([0, 102])
-        plt.tight_layout()
-        plt.subplots_adjust(top=0.92)
-        image_path = log_file_jv.replace(
-            '.txt', '_' + boxplotdata_HL['var_names'][i] +
-            '_series_shunt_resistances_yields.png')
-        plt.savefig(image_path)
-        images.append(image_path)
-        pp.savefig()
+# Create new slide and box plots for PV parameters, save figures,
+# and add them to the new slide
+        data_slide = rgl.title_image_slide(
+            prs, boxplotdata_HL['var_names'][i] + ' basic parameters')
+        params = ['Jsc', 'Voc', 'FF', 'PCE']
+        for ix, p in enumerate(params):
+            image_path = image_folder + p + '_box2.png'
+            rgl.create_save_boxplot(p, boxplotdata_HL, boxplotdata_LH, i, x,
+                                    image_path)
+            data_slide.shapes.add_picture(image_path,
+                                          left=lefts[str(ix)],
+                                          top=tops[str(ix)],
+                                          height=height)
+
+# Create new slide, box plots, and bar charts for parameters, save
+# figures and add them to the new slide
+        data_slide = rgl.title_image_slide(
+            prs, boxplotdata_HL['var_names'][i] +
+            ' series and shunt resistances; yields')
+        params = ['Rs', 'Rsh', 'yields_var', 'yields_var_lab']
+        for ix, p in enumerate(params):
+            if p.find('yield') == -1:
+                image_path = image_folder + p + '_box2.png'
+                rgl.create_save_boxplot(p, boxplotdata_HL, boxplotdata_LH, i,
+                                        x, image_path)
+            elif p == 'yields_var':
+                image_path = image_folder + p + '_bar.png'
+                rgl.create_save_barchart(yields_var, names_yield_var, i,
+                                         image_path)
+            elif p == 'yields_var_lab':
+                image_path = image_folder + p + '_bar.png'
+                rgl.create_save_barchart(yields_var_lab, names_yield_var_lab,
+                                         i, image_path)
+            data_slide.shapes.add_picture(image_path,
+                                          left=lefts[str(ix)],
+                                          top=tops[str(ix)],
+                                          height=height)
+
+# Clear all figures from memory
+plt.close('all')
 
 # Group data by label and sort ready to plot graph of all pixels per substrate
 re_sort_data = filtered_data.sort_values(['Label', 'Pixel'],
                                          ascending=[True, True])
 grouped_by_label = re_sort_data.groupby('Label')
 
-# Get parameters for defining position of figures in subplot, attempting to
-# make it as square as possible
-no_of_subplots = len(grouped_by_label)
-subplot_rows = np.ceil(no_of_subplots**(1 / 2))
-subplot_cols = np.ceil(no_of_subplots / subplot_rows)
-
-# Get colormap
+# Define a colormap for JV plots
 cmap = plt.cm.get_cmap('rainbow')
 
 # Create lists of varibales, values, and labels for labelling figures
@@ -492,61 +378,74 @@ variables = list(substrates['Variable'])
 values = list(substrates['Value'])
 labels = list(substrates['Label'])
 
-# Create main figure
-plt.figure(figsize=(A4_width, A4_height), dpi=300)
-plt.suptitle('JV scans of every working pixel', fontsize=10, fontweight='bold')
-i = 1
+# Create figures, save images and add them to powerpoint slide
+i = 0
 for name, group in grouped_by_label:
-    plt.subplot(subplot_rows, subplot_cols, i)
-    plt.axhline(0, lw=0.5, c='black')
-    plt.title(
-        str(labels[i - 1]) + ', ' + str(variables[i - 1]) + ', ' +
-        str(values[i - 1]),
-        fontsize=8)
+
+    # Create a new slide after every four graphs are produced
+    if i % 4 == 0:
+        data_slide = rgl.title_image_slide(
+            prs, 'JV scans of every working pixel, page ' + str(int(i / 4)))
+
+# Create figure, axes, y=0 line, and title
+    fig = plt.figure(figsize=(A4_width / 2, A4_height / 2), dpi=300)
+    ax = fig.add_subplot(1, 1, 1)
+    ax.axhline(0, lw=0.5, c='black')
+    ax.set_title(str(labels[i]) + ', ' + str(variables[i]) + ', ' + str(values[
+        i]))
 
     c_div = 1 / len(group)
-    j = 0
     pixels = list(group['Pixel'])
     max_group_jsc = max(list(group['Jsc']))
+
+    # Import data for each pixel and plot on axes
+    j = 0
     for file in group['File_Path']:
-        new_path = file.replace('\\', '\\\\')
 
         if '_LH_' in new_path:
-            data_LH_path = new_path
-            data_HL_path = new_path.replace('_LH_', '_HL_')
+            data_LH_path = file
+            data_HL_path = file.replace('_LH_', '_HL_')
         else:
-            data_HL_path = new_path
-            data_LH_path = new_path.replace('_HL_', '_LH_')
-
+            data_HL_path = file
+            data_LH_path = file.replace('_HL_', '_LH_')
         data_LH = np.genfromtxt(data_LH_path, delimiter='\t')
         data_HL = np.genfromtxt(data_HL_path, delimiter='\t')
         data_LH = data_LH[~np.isnan(data_LH).any(axis=1)]
         data_HL = data_HL[~np.isnan(data_HL).any(axis=1)]
 
-        plt.plot(data_LH[:, 0],
-                 data_LH[:, 1],
-                 label=pixels[j],
-                 c=cmap(j * c_div),
-                 lw=2.0)
-        plt.plot(data_HL[:, 0], data_HL[:, 1], c=cmap(j * c_div), lw=2.0)
+        ax.plot(data_LH[:, 0],
+                data_LH[:, 1],
+                label=pixels[j],
+                c=cmap(j * c_div),
+                lw=2.0)
+        ax.plot(data_HL[:, 0], data_HL[:, 1], c=cmap(j * c_div), lw=2.0)
 
         j += 1
 
-    plt.xlabel('Applied bias (V)', fontsize=7)
-    plt.xticks(fontsize=7)
-    plt.ylabel('J (mA/cm^2)', fontsize=7)
-    plt.yticks(fontsize=7)
-    plt.ylim([-max_group_jsc * 1.1, max_group_jsc * 1.1])
-    plt.legend(loc='best', prop={'size': 6})
+# Format the axes
+    ax.set_xlabel('Applied bias (V)')
+    ax.set_ylabel('J (mA/cm^2)')
+    ax.set_xlim([np.min(data_HL[:, 0]), np.max(data_HL[:, 0])])
+    ax.set_ylim([-max_group_jsc * 1.1, max_group_jsc * 1.1])
+
+    # Adjust plot width to add legend outside plot area
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.85, box.height])
+    handles, labels = ax.get_legend_handles_labels()
+    lgd = ax.legend(handles, labels, loc='upper left', bbox_to_anchor=(1, 1))
+
+    # Format the figure layout, save to file, and add to ppt
+    image_path = image_folder + str(labels[i]) + '_all_JVs.png'
+    fig.savefig(image_path, bbox_extra_artists=(lgd, ), bbox_inches='tight')
+    data_slide.shapes.add_picture(image_path,
+                                  left=lefts[str(i % 4)],
+                                  top=tops[str(i % 4)],
+                                  height=height)
+
+    # Close figure
+    plt.close(fig)
 
     i += 1
-
-plt.tight_layout()
-plt.subplots_adjust(top=0.92)
-image_path = log_file_jv.replace('.txt', '_all_JVs.png')
-plt.savefig(image_path)
-images.append(image_path)
-pp.savefig()
 
 # filter dataframe to leave on the best pixel for each variable value
 sort_best_pixels = filtered_data.sort_values(['Variable', 'Value', 'PCE'],
@@ -564,24 +463,31 @@ variables = list(best_pixels['Variable'])
 values = list(best_pixels['Value'])
 jscs = list(best_pixels['Jsc'])
 
-# create main figure
-plt.figure(figsize=(A4_width, A4_height), dpi=300)
-plt.suptitle('Best pixels', fontsize=10, fontweight='bold')
-
-# initialise index for subplot and start looping through best cells dataframe
-i = 1
-
 # Loop for iterating through best pixels dataframe and picking out JV data
 # files. Each plot contains forward and reverse sweeps, both light and dark.
+i = 0
 for file in best_pixels['File_Path']:
-    new_path = file.replace('\\', '\\\\')
 
+    # Create a new slide after every four graphs are produced
+    if i % 4 == 0:
+        data_slide = rgl.title_image_slide(
+            prs, 'Best pixel JVs, page ' + str(int(i / 4)))
+
+# Create figure, axes, y=0 line, and title
+    fig = plt.figure(figsize=(A4_width / 2, A4_height / 2), dpi=300)
+    ax = fig.add_subplot(1, 1, 1)
+    ax.axhline(0, lw=0.5, c='black')
+    ax.set_title(str(labels[i]) + ', ' + str(variables[i]) + ', ' + str(values[
+        i]))
+
+    # Import data for each pixel and plot on axes, ignoring errors. If
+    # data in a file can't be plotted, just ignore it.
     if '_LH_' in new_path:
-        JV_light_LH_path = new_path
-        JV_light_HL_path = new_path.replace('_LH_', '_HL_')
+        JV_light_LH_path = file
+        JV_light_HL_path = file.replace('_LH_', '_HL_')
     else:
-        JV_light_HL_path = new_path
-        JV_light_LH_path = new_path.replace('_HL_', '_LH_')
+        JV_light_HL_path = file
+        JV_light_LH_path = file.replace('_HL_', '_LH_')
 
     try:
         JV_light_LH_data = np.genfromtxt(JV_light_LH_path, delimiter='\t')
@@ -608,47 +514,52 @@ for file in best_pixels['File_Path']:
     except NameError:
         pass
 
-    plt.subplot(subplot_rows, subplot_cols, i)
-    plt.axhline(0, lw=0.5, c='black')
-    plt.title(str(variables[i - 1]) + ', ' + str(values[i - 1]), fontsize=8)
-    plt.plot(JV_light_LH_data[:, 0],
-             JV_light_LH_data[:, 1],
-             label='L->H',
-             c='red',
-             lw=2.0)
-    plt.plot(JV_light_HL_data[:, 0],
-             JV_light_HL_data[:, 1],
-             label='H->L',
-             c='green',
-             lw=2.0)
+    ax.plot(JV_light_LH_data[:, 0],
+            JV_light_LH_data[:, 1],
+            label='L->H',
+            c='red',
+            lw=2.0)
+    ax.plot(JV_light_HL_data[:, 0],
+            JV_light_HL_data[:, 1],
+            label='H->L',
+            c='green',
+            lw=2.0)
     try:
-        plt.plot(JV_dark_LH_data[:, 0],
-                 JV_dark_LH_data[:, 1],
-                 label='L->H',
-                 c='blue',
-                 lw=2.0)
-        plt.plot(JV_dark_HL_data[:, 0],
-                 JV_dark_HL_data[:, 1],
-                 label='H->L',
-                 c='orange',
-                 lw=2.0)
+        ax.plot(JV_dark_LH_data[:, 0],
+                JV_dark_LH_data[:, 1],
+                label='L->H',
+                c='blue',
+                lw=2.0)
+        ax.plot(JV_dark_HL_data[:, 0],
+                JV_dark_HL_data[:, 1],
+                label='H->L',
+                c='orange',
+                lw=2.0)
     except NameError:
         pass
-    plt.xlabel('Applied bias (V)', fontsize=7)
-    plt.xticks(fontsize=7)
-    plt.ylabel('J (mA/cm^2)', fontsize=7)
-    plt.yticks(fontsize=7)
-    plt.ylim([-jscs[i - 1] * 1.1, jscs[i - 1] * 1.1])
-    plt.legend(loc='best', prop={'size': 6})
+
+# Format the axes
+    ax.set_xlabel('Applied bias (V)')
+    ax.set_ylabel('J (mA/cm^2)')
+    ax.set_xlim(
+        [np.min(JV_light_HL_data[:, 0]), np.max(JV_light_HL_data[:, 0])])
+    ax.set_ylim([-jscs[i - 1] * 1.1, jscs[i - 1] * 1.1])
+    ax.legend(loc='best')
+
+    # Format the figure layout, save to file, and add to ppt
+    image_path = image_folder + str(variables[i]) + '_' + str(variables[
+        i]) + '_best_JV.png'
+    fig.tight_layout()
+    fig.savefig(image_path)
+    data_slide.shapes.add_picture(image_path,
+                                  left=lefts[str(i % 4)],
+                                  top=tops[str(i % 4)],
+                                  height=height)
+
+    # Close figure
+    plt.close(fig)
 
     i += 1
-
-plt.tight_layout()
-plt.subplots_adjust(top=0.92)
-image_path = log_file_jv.replace('.txt', '_best_JVs.png')
-plt.savefig(image_path)
-images.append(image_path)
-pp.savefig()
 
 # Sort and filter data ready for plotting different scan rates/repeat scans
 sorted_data_scan = data.sort_values(
@@ -675,217 +586,94 @@ filtered_data_LH = filtered_data_LH[filtered_data_LH.Label.isin(
 group_by_label_pixel_HL = filtered_scan_HL.groupby(['Label', 'Pixel'])
 group_by_label_pixel_LH = filtered_scan_LH.groupby(['Label', 'Pixel'])
 
-# Iterate through these groups and plot JV curves if more than one scan hasn
+# Iterate through these groups and plot JV curves if more than one scan
 # has been performed
 i = 0
-i_max = len(group_by_label_pixel_HL) - 1
-j = 0
-for ng_HL, ng_LH in zip(group_by_label_pixel_HL, group_by_label_pixel_LH):
-    name_HL = ng_HL[0]
-    group_HL = ng_HL[1]
-    name_LH = ng_LH[0]
-    group_LH = ng_LH[1]
+for iHL, iLH in zip(group_by_label_pixel_HL.indices,
+                    group_by_label_pixel_LH.indices):
+    group_HL = group_by_label_pixel_HL.get_group(iHL)
+    group_LH = group_by_label_pixel_LH.get_group(iLH)
+
     if any(int(scan) > 0 for scan in group_HL['scan_num']):
+
+        # Get label, variable, value, and pixel for title and image path
         label = group_HL['Label'].unique()[0]
         variable = group_HL['Variable'].unique()[0]
         value = group_HL['Value'].unique()[0]
         pixel = group_HL['Pixel'].unique()[0]
+
+        # Find maximum Jsc of the group for y-axis limits and number of
+        # JV curves for division of the colormap for the curves
         jsc_max = max(max(group_HL['Jsc']), max(group_LH['Jsc']))
         c_div = 1 / len(group_HL)
+
+        # Start a new slide after every 4th figure
         if i % 4 == 0:
-            plt.figure(figsize=(A4_width, A4_height), dpi=300)
-            plt.suptitle('Repeat scan/scan rate variation JV curves',
-                         fontsize=10,
-                         fontweight='bold')
-            j += 1
-        plt.subplot(2, 2, (i % 4) + 1)
-        k = 0
+            data_slide = rgl.title_image_slide(
+                prs, 'Repeat scan/scan rate variation JV curves, page ' +
+                str(int(i / 4)))
+
+# Create figure, axes, y=0 line, and title
+        fig = plt.figure(figsize=(A4_width / 2, A4_height / 2), dpi=300)
+        ax = fig.add_subplot(1, 1, 1)
+        ax.axhline(0, lw=0.5, c='black')
+        ax.set_title(str(labels[i]) + ', ' + str(variables[i]) + ', ' + str(
+            values[i]))
+
+        # Open data files and plot a JV curve on the same axes for each scan
+        j = 0
         for path_HL, path_LH, scan_rate_HL, scan_rate_LH, scan_num_HL, scan_num_LH in zip(
                 group_HL['File_Path'], group_LH['File_Path'],
                 group_HL['Scan_rate'], group_LH['Scan_rate'],
                 group_HL['scan_num'], group_LH['scan_num']):
+
             data_HL = np.genfromtxt(path_HL, delimiter='\t')
             data_LH = np.genfromtxt(path_LH, delimiter='\t')
             data_HL = data_HL[~np.isnan(data_HL).any(axis=1)]
             data_LH = data_LH[~np.isnan(data_LH).any(axis=1)]
-            plt.plot(
-                data_HL[:, 0],
-                data_HL[:, 1],
-                c=cmap(k * c_div),
-                label=str(scan_num_HL) + ', ' + str(scan_rate_HL) + ' V/s')
-            plt.plot(data_LH[:, 0], data_LH[:, 1], c=cmap(k * c_div))
-            k += 1
-        plt.legend(loc='best', fontsize=7)
-        plt.xlabel('Applied voltage (V)', fontsize=9)
-        plt.ylabel('J (mA/cm^2)', fontsize=9)
-        plt.ylim([-jsc_max * 1.05, jsc_max * 1.05])
-        plt.title(
-            str(label) + ', pixel ' + str(pixel) + ', ' + str(variable) + ', '
-            + str(value),
-            fontsize=8)
-        if (i % 4 == 3) or (i == i_max):
-            plt.tight_layout()
-            plt.subplots_adjust(top=0.92)
-            image_path = log_file_jv.replace(
-                '.txt', '_repeat_scan_JVs_' + str(j) + '.png')
-            plt.savefig(image_path)
-            images.append(image_path)
-            pp.savefig()
+
+            ax.plot(data_HL[:, 0],
+                    data_HL[:, 1],
+                    c=cmap(j * c_div),
+                    label=str(scan_num_HL) + ', ' + str(scan_rate_HL) + ' V/s')
+            ax.plot(data_LH[:, 0], data_LH[:, 1], c=cmap(j * c_div))
+
+            j += 1
+
+# Format the axes
+        ax.set_xlabel('Applied bias (V)')
+        ax.set_ylabel('J (mA/cm^2)')
+        ax.set_xlim([np.min(data_HL[:, 0]), np.max(data_HL[:, 0])])
+        ax.set_ylim([-jscs[i - 1] * 1.1, jscs[i - 1] * 1.1])
+
+        # Adjust plot width to add legend outside plot area
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        handles, labels = ax.get_legend_handles_labels()
+        lgd = ax.legend(handles,
+                        labels,
+                        loc='upper left',
+                        bbox_to_anchor=(1, 1))
+
+        # Format the figure layout, save to file, and add to ppt
+        image_path = image_folder + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(
+                pixel) + '_repeat_scan_JV.png'
+        fig.savefig(image_path, bbox_extra_artists=(lgd), bbox_inches='tight')
+        data_slide.shapes.add_picture(image_path,
+                                      left=lefts[str(i % 4)],
+                                      top=tops[str(i % 4)],
+                                      height=height)
+
+        # Close figure
+        plt.close(fig)
+
         i += 1
 
-
-# Check whether other experiments have been performed and therefore if more
-# data needs to be analysed.
-def exp_file_list(folderpath):
-    """
-
-    Determine whether data exists for an additional experiment. If so, make
-    a list of files. Returns a dictionary containing a boolean indicating
-    existance and a list of files (empty if experiment hasn't been performed).
-
-    """
-
-    files = []
-    files_split = []
-    if os.path.exists(folderpath):
-        exists = True
-        for f in os.listdir(folderpath):
-            if (f.endswith('.txt')) & (f.find('_LOG.txt') == -1):
-                files.append(folderpath + f)
-                files_split.append(f.split('_'))
-        if len(files) == 0:
-            exists = False
-    else:
-        exists = False
-
-    return {'exists': exists, 'files': files, 'files_split': files_split}
-
-
-# Build a log dataframe from from experiment files and master J-V log.
-def build_log_df(exp_files, master_log):
-    """
-
-    Build a log dataframe from from experiment files and master J-V log.
-
-    """
-
-    labels = []
-    pixels = []
-    scan_dir = []
-    for item in exp_files['files_split']:
-        labels.append(item[0])
-        pixels.append(item[1])
-        scan_dir.append(item[3])
-    files_dict = {'Label': labels,
-                  'Pixel': pixels,
-                  'File_Path': exp_files['files'],
-                  'Scan_direction': scan_dir}
-    files_df = pd.DataFrame(files_dict)
-    files_df = files_df.sort_values(['Label'], ascending=True)
-    unique_labels_df = master_log.drop_duplicates(['Label'])
-    unique_labels_df = unique_labels_df.sort_values(['Label'], ascending=True)
-    unique_labels_df = unique_labels_df[unique_labels_df.Label.isin(
-        files_df.Label.values)]
-    files_df['Variable'] = unique_labels_df['Variable']
-    files_df['Value'] = unique_labels_df['Value']
-
-    return files_df
-
-
-# Function for calculating all factors of an integer.
-def factors(n):
-    """
-
-    Returns a set of factors of the integer n.
-
-    """
-
-    pairs = [[i, n // i] for i in range(1, int(n**0.5) + 1) if n % i == 0]
-    return set(reduce(list.__add__, pairs))
-
-
-# Function for rounding a number to given number of significant figures.
-def round_sig_fig(x, sf):
-    """
-
-    Rounds any number, x, to the specified number of significant figures, sf.
-
-    """
-    format_str = '%.' + str(sf) + 'e'
-    x_dig, x_ord = map(float, (format_str % x).split('e'))
-    return round(x, int(-x_ord) + 1)
-
-
-# Function for calculting the tick positions for a plot axis.
-def calc_ticks(data_min, data_max):
-    """
-
-    Returns an array of axis tick labels given the max and min values of
-    the data to be plotted.
-
-    """
-
-    min_digs, min_order = map(float, ('%.6e' % data_min).split('e'))
-    max_digs, max_order = map(float, ('%.6e' % data_max).split('e'))
-    min_order -= 1
-    max_order -= 1
-    if max_order > min_order:
-        min_digs = np.floor(min_digs * 10**(min_order - max_order + 1))
-        max_digs = np.ceil(max_digs * 10)
-        y_range_digs = max_digs - min_digs
-        while np.max(list(filter(lambda x: x < 8, factors(y_range_digs)))) < 3:
-            y_range_digs += 2
-            min_digs -= 1
-            max_digs += 1
-        num_ticks = np.max(list(filter(lambda x: x < 8, factors(
-            y_range_digs))))
-        min_tick = min_digs * 10**max_order
-        ticks = np.linspace(min_tick, y_range_digs * 10**max_order + min_tick,
-                            num_ticks + 1)
-    elif min_order > max_order:
-        min_digs = np.floor(min_digs * 10)
-        max_digs = np.ceil(max_digs * 10**(max_order - min_order + 1))
-        y_range_digs = max_digs - min_digs
-        while np.max(list(filter(lambda x: x < 8, factors(y_range_digs)))) < 3:
-            y_range_digs += 2
-            min_digs -= 1
-            max_digs += 1
-        num_ticks = np.max(list(filter(lambda x: x < 8, factors(
-            y_range_digs))))
-        min_tick = min_digs * 10**min_order
-        ticks = np.linspace(min_tick, y_range_digs * 10**min_order + min_tick,
-                            num_ticks + 1)
-    elif max_order == min_order:
-        str_min = str(min_digs).replace('.', '').replace('-', '')
-        str_max = str(max_digs).replace('.', '').replace('-', '')
-        i = 0
-        while str_min[i] == str_max[i]:
-            i += 1
-            if i == len(str_min):
-                break
-        if i == len(str_min):
-            ticks = np.array([min_digs * 10**(min_order + 1)])
-        else:
-            min_digs = np.floor(min_digs * 10**(1 + i))
-            max_digs = np.ceil(max_digs * 10**(1 + i))
-            y_range_digs = max_digs - min_digs
-            while np.max(list(filter(lambda x: x < 8, factors(
-                    y_range_digs)))) < 3:
-                y_range_digs += 2
-                min_digs -= 1
-                max_digs += 1
-            num_ticks = np.max(list(filter(lambda x: x < 8, factors(
-                y_range_digs))))
-            min_tick = min_digs * 10**(min_order - i)
-            ticks = np.linspace(min_tick, y_range_digs * 10**
-                                (min_order - i) + min_tick, num_ticks + 1)
-
-    return ticks
-
 # Build a time dependence log dataframe from file paths and J-V log file.
-time_files = exp_file_list(folderpath + folderpath_time)
+time_files = rgl.exp_file_list(folderpath + folderpath_time)
 if time_files['exists']:
-    time_files_df = build_log_df(time_files, sorted_data)
+    time_files_df = rgl.build_log_df(time_files, sorted_data)
 
     sorted_time_files = time_files_df.sort_values(
         ['Label', 'Pixel', 'Scan_direction'],
@@ -893,14 +681,20 @@ if time_files['exists']:
     sorted_time_files = sorted_time_files.drop_duplicates(['Label', 'Pixel'])
 
     i = 0
-    i_max = len(sorted_time_files) - 1
-    j = 0
     for index, row in sorted_time_files.iterrows():
+
+        # Get label, variable, value, and pixel for title and image path
+        label = row['Label']
+        variable = row['Variable']
+        value = row['Value']
+        pixel = row['Pixel']
+
+        # Start a new slide after every 4th figure
         if i % 4 == 0:
-            fig = plt.figure(figsize=(A4_width, A4_height), dpi=300)
-            fig.suptitle('J-t characterics', fontsize=10, fontweight='bold')
-            gs = gridspec.GridSpec(7, 2)
-            j += 1
+            data_slide = rgl.title_image_slide(
+                prs, 'J-t characterics, page ' + str(int(i / 4)))
+
+# Open the data files
         path_HL = row['File_Path']
         path_LH = path_HL.replace('HL', 'LH')
         data_HL = np.genfromtxt(path_HL)
@@ -908,88 +702,137 @@ if time_files['exists']:
         data_HL = data_HL[~np.isnan(data_HL).any(axis=1)]
         data_LH = data_LH[~np.isnan(data_LH).any(axis=1)]
         data = np.vstack([data_HL, data_LH])
-        ax1 = fig.add_subplot(gs[(int(np.floor((i / 2) % 2)) * 4):(int(
-            np.floor((i / 2) % 2)) * 4) + 2, i % 2])
+
+        # Create figure object
+        fig = plt.figure(figsize=(A4_width / 2, A4_height / 2), dpi=300)
+
+        # Add axes for current density and format them
+        ax1 = fig.add_subplot(2, 1, 1)
         ax1.plot(data[:, 0], data[:, 2], 'blue')
-        yticks = calc_ticks(np.min(data[:, 2]), np.max(data[:, 2]))
+        yticks = rgl.calc_ticks(np.min(data[:, 2]), np.max(data[:, 2]))
         ax1.set_yticks(yticks)
-        ax1.set_yticklabels(yticks, fontsize=7)
+        ax1.set_yticklabels(yticks)
         ax1.set_ylim([yticks[0], yticks[-1]])
-        ax1.set_ylabel('J (mA/cm^2)', fontsize=7)
-        xticks = calc_ticks(np.min(data[:, 0]), np.max(data[:, 0]))
+        ax1.set_ylabel('J (mA/cm^2)')
+        xticks = rgl.calc_ticks(np.min(data[:, 0]), np.max(data[:, 0]))
         ax1.set_xticks(xticks)
         ax1.set_xticklabels([])
         ax1.set_xlim([xticks[0], xticks[-1]])
-        ax1.set_title(
-            str(row['Label']) + ', pixel ' + str(row['Pixel']) + ', ' +
-            str(row['Variable']) + ', ' + str(row['Value']),
-            fontsize=9)
-        ax2 = fig.add_subplot(gs[(int(np.floor((i / 2) % 2)) * 4) + 2, i % 2])
+        ax1.set_title(str(row['Label']) + ', pixel ' + str(row['Pixel']) + ', '
+                      + str(row['Variable']) + ', ' + str(row['Value']))
+
+        # Add axes for bias and format them
+        ax2 = fig.add_subplot(2, 1, 2)
         ax2.plot(data[:, 0], data[:, 1], 'black')
-        yticks = calc_ticks(np.min(data[:, 1]), np.max(data[:, 1]))
+        yticks = rgl.calc_ticks(np.min(data[:, 1]), np.max(data[:, 1]))
         ytick_range = yticks[-1] - yticks[0]
         ax2.set_yticks(yticks)
-        ax2.set_yticklabels(yticks, fontsize=7)
+        ax2.set_yticklabels(yticks)
         ax2.set_ylim(
             [yticks[0] - 0.05 * ytick_range, yticks[-1] + 0.05 * ytick_range])
-        ax2.set_ylabel('Bias (V)', fontsize=7)
+        ax2.set_ylabel('Bias (V)')
         ax2.set_xticks(xticks)
-        ax2.set_xticklabels(xticks, fontsize=7)
+        ax2.set_xticklabels(xticks)
         ax2.set_xlim([xticks[0], xticks[-1]])
-        ax2.set_xlabel('Time (s)', fontsize=7)
-        if (i % 4 == 3) or (i == i_max):
-            gs.update(wspace=0.3, hspace=0.1)
-            image_path = log_file_jv.replace(
-                '.txt', '_jt_characteristics' + '_' + str(j) + '.png')
-            fig.savefig(image_path)
-            images.append(image_path)
-            pp.savefig()
+        ax2.set_xlabel('Time (s)')
+
+        # Format the figure layout, save to file, and add to ppt
+        image_path = image_folder + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '_Jt.png'
+        fig.tight_layout()
+        fig.savefig(image_path)
+        data_slide.shapes.add_picture(image_path,
+                                      left=lefts[str(i % 4)],
+                                      top=tops[str(i % 4)],
+                                      height=height)
+
+        # Close figure
+        plt.close(fig)
+
         i += 1
 
 # Build a max power stabilisation log dataframe from file paths and J-V log
 # file.
-maxp_files = exp_file_list(folderpath + folderpath_maxp)
+maxp_files = rgl.exp_file_list(folderpath + folderpath_maxp)
 if maxp_files['exists']:
-    maxp_files_df = build_log_df(maxp_files, sorted_data)
+    maxp_files_df = rgl.build_log_df(maxp_files, sorted_data)
 
-    colors = ('Green', 'Red', 'Blue')
-    labels = ('Applied Bias (V)', '|J| (mA/cm^2)', 'PCE (%)')
-    cols = (1, 3, 5)
     i = 0
-    i_max = len(maxp_files_df) - 1
-    j = 0
     for index, row in maxp_files_df.iterrows():
+
+        # Get label, variable, value, and pixel for title and image path
+        label = row['Label']
+        variable = row['Variable']
+        value = row['Value']
+        pixel = row['Pixel']
+
+        # Start a new slide after every 4th figure
         if i % 4 == 0:
-            fig = plt.figure(figsize=(A4_width, A4_height), dpi=300)
-            fig.suptitle('Maximum power stabilisation',
-                         fontsize=10,
-                         fontweight='bold')
-            gs = gridspec.GridSpec(2, 2)
-            j += 1
+            data_slide = rgl.title_image_slide(
+                prs, 'Maximum power stabilisation, page ' + str(int(i / 4)))
+
+# Open the data file
         path = row['File_Path']
         data = np.genfromtxt(path, delimiter='\t')
         data = data[~np.isnan(data).any(axis=1)]
-        ax = fig.add_subplot(gs[int(np.floor(i / 2)), i % 2])
-        ax.set_title(
-            str(row['Label']) + ', pixel ' + str(row['Pixel']) + ', ' +
-            str(row['Variable']) + ', ' + str(row['Value']),
-            fontsize=9)
-        axes = [ax, ax.twinx(), ax.twinx()]
-        axes[-1].spines['right'].set_position(('axes', 1.2))
-        axes[-1].set_frame_on(True)
-        axes[-1].patch.set_visible(False)
-        for ax, color, col, label in zip(axes, colors, cols, labels):
-            ax.plot(data[:, 0], np.absolute(data[:, col]), color=color)
-            ax.set_ylabel(label, color=color)
-            ax.tick_params(axis='y', colors=color)
-        axes[0].set_xlabel('Time (s)')
-        if (i % 4 == 3) or (i == i_max):
-            gs.update(wspace=0.6, hspace=0.3)
-            image_path = log_file_jv.replace(
-                '.txt', '_max_P_stab' + '_' + str(j) + '.png')
-            fig.savefig(image_path)
-            images.append(image_path)
-            pp.savefig()
+
+        # Create figure object
+        fig = plt.figure(figsize=(A4_width / 2, A4_height / 2), dpi=300)
+
+        # Add axes for bias and format them
+        ax1 = fig.add_subplot(3, 1, 1)
+        ax1.set_title(str(row['Label']) + ', pixel ' + str(row['Pixel']) + ', '
+                      + str(row['Variable']) + ', ' + str(row['Value']))
+        min_x = np.min(data[:, 0])
+        max_x = np.max(data[:, 0])
+        ax1.plot(data[:, 0], np.absolute(data[:, 1]), color='green')
+        min_y = np.min(np.absolute(data[:, 1]))
+        max_y = np.max(np.absolute(data[:, 1]))
+        yrange = max_y - min_y
+        ax1.set_ylim([min_y - yrange * 0.1, max_y + yrange * 0.1])
+        ax1.set_ylabel('Bias (V)', color='green')
+        ax1.set_xlim([min_x, max_x])
+        ax1.set_xticklabels([])
+        ax1.locator_params(axis='y', tight=False, nbins=4)
+
+        # Add axes for J and format them
+        ax2 = fig.add_subplot(3, 1, 2)
+        ax2.plot(data[:, 0], np.absolute(data[:, 3]), color='red')
+        min_y = np.min(np.absolute(data[:, 3]))
+        max_y = np.max(np.absolute(data[:, 3]))
+        yrange = max_y - min_y
+        ax2.set_ylim([min_y - yrange * 0.1, max_y + yrange * 0.1])
+        ax2.set_ylabel('|J| (mA/cm^2)', color='red')
+        ax2.set_xlim([min_x, max_x])
+        ax2.set_xticklabels([])
+        ax2.locator_params(axis='y', tight=False, nbins=4)
+
+        # Add axes for PCE and format them
+        ax3 = fig.add_subplot(3, 1, 3)
+        ax3.plot(data[:, 0], np.absolute(data[:, 5]), color='blue')
+        min_y = np.min(np.absolute(data[:, 5]))
+        max_y = np.max(np.absolute(data[:, 5]))
+        yrange = max_y - min_y
+        ax3.set_ylim([min_y - yrange * 0.1, max_y + yrange * 0.1])
+        ax3.set_ylabel('PCE (%)', color='blue')
+        ax3.set_xlim([min_x, max_x])
+        ax3.set_xlabel('Time (s)')
+        ax3.locator_params(axis='y', tight=False, nbins=4)
+
+        # Format the figure layout, save to file, and add to ppt
+        image_path = image_folder + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '_mppt.png'
+        fig.tight_layout()
+        fig.subplots_adjust(hspace=0.05)
+        fig.savefig(image_path)
+        data_slide.shapes.add_picture(image_path,
+                                      left=lefts[str(i % 4)],
+                                      top=tops[str(i % 4)],
+                                      height=height)
+
+        # Close figure
+        plt.close(fig)
+
         i += 1
 
 # Plot inensity dependent graphs if experiment data exists
@@ -1002,6 +845,8 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
                               'Area', 'Stabil_Level', 'Stabil_time',
                               'Meas_delay', 'Vmp', 'File_Path', 'Scan_rate',
                               'Scan_direction', 'Intensity'])
+
+    # Sort, filter, and group intensity dependent data
     sorted_data_int = data.sort_values(['Label', 'Pixel', 'Intensity', 'PCE'],
                                        ascending=[True, True, True, False])
     filtered_data_int_HL = sorted_data_int[(
@@ -1017,61 +862,80 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
 
     # Plot intensity dependent JV curve parameters
     for ng_HL, ng_LH in zip(group_by_label_pixel_HL, group_by_label_pixel_LH):
+
+        # Unpack group name and data
         name_HL = ng_HL[0]
         group_HL = ng_HL[1]
         name_LH = ng_LH[0]
         group_LH = ng_LH[1]
+
+        # Get label, variable, value, and pixel for title and image path
         label = group_HL['Label'].unique()[0]
         variable = group_HL['Variable'].unique()[0]
         value = group_HL['Value'].unique()[0]
         pixel = group_HL['Pixel'].unique()[0]
+
+        # Perfom linear fit to intensity dependence of Jsc
         m_HL, c_HL, r_HL, p_HL, se_HL = sp.stats.linregress(
             group_HL['Intensity'] * 100, group_HL['Jsc'])
         m_LH, c_LH, r_LH, p_LH, se_LH = sp.stats.linregress(
             group_LH['Intensity'] * 100, group_LH['Jsc'])
         r_sq_HL = r_HL**2
         r_sq_LH = r_LH**2
-        plt.figure(figsize=(A4_width, A4_height), dpi=300)
-        plt.suptitle('Intensity dependence, ' + str(label) + ', pixel ' +
-                     str(pixel) + ', ' + str(variable) + ', ' + str(value),
-                     fontsize=10,
-                     fontweight='bold')
-        plt.subplot(2, 2, 1)
-        plt.scatter(group_HL['Intensity'] * 100,
-                    group_HL['Jsc'],
-                    c='blue',
-                    label='H->L')
-        plt.scatter(group_LH['Intensity'] * 100,
-                    group_LH['Jsc'],
-                    c='red',
-                    label='L->H')
-        plt.legend(loc='upper left', scatterpoints=1, fontsize=9)
-        plt.plot(group_HL['Intensity'] * 100,
-                 group_HL['Intensity'] * 100 * m_HL + c_HL,
-                 c='blue')
-        plt.plot(group_LH['Intensity'] * 100,
-                 group_LH['Intensity'] * 100 * m_LH + c_LH,
-                 c='red')
-        plt.text(
-            np.max(group_HL['Intensity'] * 100) * 0.6,
-            (np.max(group_HL['Jsc']) - np.min(group_HL['Jsc'])) * 0.11 +
-            np.min(group_HL['Jsc']),
-            'm=' + str(round_sig_fig(m_HL, 3)) + ', c=' +
-            str(round_sig_fig(c_HL, 3)) + ', R^2=' +
-            str(round_sig_fig(r_sq_HL, 3)),
-            fontsize=8,
-            color='blue')
-        plt.text(
-            np.max(group_HL['Intensity'] * 100) * 0.6,
-            (np.max(group_HL['Jsc']) - np.min(group_HL['Jsc'])) * 0.01 +
-            np.min(group_HL['Jsc']),
-            'm=' + str(round_sig_fig(m_LH, 3)) + ', c=' +
-            str(round_sig_fig(c_LH, 3)) + ', R^2=' +
-            str(round_sig_fig(r_sq_LH, 3)),
-            fontsize=8,
-            color='red')
-        plt.xlabel('Light intensity (W/cm^2)', fontsize=9)
-        plt.ylabel('Jsc (mA/cm^2)', fontsize=9)
+
+        # Create new slide (do this every iteration of the loop because each
+        # loop creates four graphs)
+        data_slide = rgl.title_image_slide(
+            prs, 'Intensity dependence ' + str(label) + ', ' + str(variable) +
+            ', ' + str(value) + ', pixel ' + str(pixel))
+
+        # Create intensity dependence of Jsc figure
+        fig = plt.figure(figsize=(A4_width / 2, A4_height / 2), dpi=300)
+        ax = fig.add_subplot(1, 1, 1)
+        ax.scatter(group_HL['Intensity'] * 100,
+                   group_HL['Jsc'],
+                   c='blue',
+                   label='H->L, ' + 'm=' + str(rgl.round_sig_fig(m_HL, 3)) +
+                   ', c=' + str(rgl.round_sig_fig(c_HL, 3)) + ', R^2=' +
+                   str(rgl.round_sig_fig(r_sq_HL, 3)))
+        ax.scatter(group_LH['Intensity'] * 100,
+                   group_LH['Jsc'],
+                   c='red',
+                   label='L->H, ' + 'm=' + str(rgl.round_sig_fig(m_LH, 3)) +
+                   ', c=' + str(rgl.round_sig_fig(c_LH, 3)) + ', R^2=' +
+                   str(rgl.round_sig_fig(r_sq_LH, 3)))
+
+        # Adjust plot width to add legend outside plot area
+        ax.legend(loc='upper left', scatterpoints=1, prop={'size': 9})
+
+        # Plot linear fits
+        ax.plot(group_HL['Intensity'] * 100,
+                group_HL['Intensity'] * 100 * m_HL + c_HL,
+                c='blue')
+        ax.plot(group_LH['Intensity'] * 100,
+                group_LH['Intensity'] * 100 * m_LH + c_LH,
+                c='red')
+
+        # Format axes
+        ax.set_xlabel('Light intensity (mW/cm^2)')
+        ax.set_ylabel('Jsc (mA/cm^2)')
+        ax.set_xlim([0, np.max(group_HL['Intensity'] * 100) * 1.05])
+
+        # Format the figure layout, save to file, and add to ppt
+        image_path = image_folder + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '_jsc_intdep.png'
+        fig.tight_layout()
+        fig.savefig(image_path)
+        data_slide.shapes.add_picture(image_path,
+                                      left=lefts[str(0)],
+                                      top=tops[str(0)],
+                                      height=height)
+
+        # Close figure
+        plt.close(fig)
+
+        # Perfom linear fit to ln(Jsc) dependence of Voc to estimate n and
+        # J0 assuming single diode equivalent circuit
         m_HL, c_HL, r_HL, p_HL, se_HL = sp.stats.linregress(
             np.log(group_HL['Jsc']), group_HL['Voc'])
         m_LH, c_LH, r_LH, p_LH, se_LH = sp.stats.linregress(
@@ -1082,128 +946,197 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
         n_LH = m_LH * q / (kB * T)
         j0_HL = np.exp(-c_HL / m_HL)
         j0_LH = np.exp(-c_LH / m_LH)
-        plt.subplot(2, 2, 2)
-        plt.scatter(
+
+        # Create ln(Jsc) dependence of Voc figure
+        fig = plt.figure(figsize=(A4_width / 2, A4_height / 2), dpi=300)
+        ax = fig.add_subplot(1, 1, 1)
+        ax.scatter(
             np.log(group_HL['Jsc']),
             group_HL['Voc'],
             c='blue',
-            label='H->L')
-        plt.scatter(
+            label='H->L, ' + 'n=' + str(rgl.round_sig_fig(n_HL, 3)) + ', J_0='
+            + ('%.2e' % j0_HL) + ' (mA/cm^2)' + ', R^2=' +
+            str(rgl.round_sig_fig(r_sq_HL, 3)))
+        ax.scatter(
             np.log(group_LH['Jsc']),
             group_LH['Voc'],
             c='red',
-            label='L->H')
-        plt.legend(loc='upper left', scatterpoints=1, fontsize=9)
-        plt.plot(
+            label='L->H, ' + 'n=' + str(rgl.round_sig_fig(n_LH, 3)) + ', J_0='
+            + ('%.2e' % j0_LH) + ' (mA/cm^2)' + ', R^2=' +
+            str(rgl.round_sig_fig(r_sq_LH, 3)))
+
+        # Adjust plot width to add legend outside plot area
+        ax.legend(loc='upper left', scatterpoints=1, prop={'size': 9})
+
+        # Plot linear fits
+        ax.plot(
             np.log(group_HL['Jsc']),
             np.log(group_HL['Jsc']) * m_HL + c_HL,
             c='blue')
-        plt.plot(
+        ax.plot(
             np.log(group_LH['Jsc']),
             np.log(group_LH['Jsc']) * m_LH + c_LH,
             c='red')
-        plt.text(
-            np.max(np.log(group_HL['Jsc'])) * 0.3,
-            (np.max(group_HL['Voc']) - np.min(group_HL['Voc'])) * 0.11 +
-            np.min(group_HL['Voc']),
-            'n=' + str(round_sig_fig(n_HL, 3)) + ', J_0=' + ('%.2e' % j0_HL) +
-            ' (mA/cm^2)' + ', R^2=' + str(round_sig_fig(r_sq_HL, 3)),
-            fontsize=8,
-            color='blue')
-        plt.text(
-            np.max(np.log(group_HL['Jsc'])) * 0.3,
-            (np.max(group_HL['Voc']) - np.min(group_HL['Voc'])) * 0.01 +
-            np.min(group_HL['Voc']),
-            'n=' + str(round_sig_fig(n_LH, 3)) + ', J_0=' + ('%.2e' % j0_LH) +
-            ' (mA/cm^2)' + ', R^2=' + str(round_sig_fig(r_sq_LH, 3)),
-            fontsize=8,
-            color='red')
-        plt.xlabel('ln(Jsc) (mA/cm^2)', fontsize=9)
-        plt.ylabel('Voc (V)', fontsize=9)
-        plt.subplot(2, 2, 3)
-        plt.scatter(group_HL['Intensity'] * 100,
-                    group_HL['FF'],
-                    c='blue',
-                    label='H->L')
-        plt.scatter(group_LH['Intensity'] * 100,
-                    group_LH['FF'],
-                    c='red',
-                    label='L->H')
-        plt.legend(loc='lower right', scatterpoints=1, fontsize=9)
-        plt.xlabel('Light intensity (W/cm^2)', fontsize=9)
-        plt.ylabel('FF', fontsize=9)
-        plt.subplot(2, 2, 4)
-        plt.scatter(group_HL['Intensity'] * 100,
-                    group_HL['PCE'],
-                    c='blue',
-                    label='H->L')
-        plt.scatter(group_LH['Intensity'] * 100,
-                    group_LH['PCE'],
-                    c='red',
-                    label='L->H')
-        plt.legend(loc='lower right', scatterpoints=1, fontsize=9)
-        plt.xlabel('Light intensity (W/cm^2)', fontsize=9)
-        plt.ylabel('PCE (%)', fontsize=9)
-        plt.tight_layout()
-        plt.subplots_adjust(top=0.92)
-        image_path = log_file_jv.replace(
-            '.txt', '_intensity_' + str(label) + '_' + str(pixel) + '.png')
-        plt.savefig(image_path)
-        images.append(image_path)
-        pp.savefig()
 
-# Plot intensity dependent V curves
+        # Format axes
+        ax.set_xlabel('ln(Jsc) (mA/cm^2)')
+        ax.set_ylabel('Voc (V)')
+        ax.set_ylim(
+            [np.min(group_HL['Voc']) * 0.95, np.max(group_HL['Voc']) * 1.05])
+
+        # Format the figure layout, save to file, and add to ppt
+        image_path = image_folder + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '_voc_intdep.png'
+        fig.tight_layout()
+        fig.savefig(image_path)
+        data_slide.shapes.add_picture(image_path,
+                                      left=lefts[str(1)],
+                                      top=tops[str(1)],
+                                      height=height)
+
+        # Close figure
+        plt.close(fig)
+
+        # Create intensity dependence of FF figure
+        fig = plt.figure(figsize=(A4_width / 2, A4_height / 2), dpi=300)
+        ax = fig.add_subplot(1, 1, 1)
+        ax.scatter(group_HL['Intensity'] * 100,
+                   group_HL['FF'],
+                   c='blue',
+                   label='H->L')
+        ax.scatter(group_LH['Intensity'] * 100,
+                   group_LH['FF'],
+                   c='red',
+                   label='L->H')
+        ax.legend(loc='best', scatterpoints=1)
+        ax.set_xlabel('Light intensity (mW/cm^2)')
+        ax.set_ylabel('FF')
+        ax.set_xlim([0, np.max(group_HL['Intensity'] * 100) * 1.05])
+
+        # Format the figure layout, save to file, and add to ppt
+        image_path = image_folder + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '_ff_intdep.png'
+        fig.tight_layout()
+        fig.savefig(image_path)
+        data_slide.shapes.add_picture(image_path,
+                                      left=lefts[str(2)],
+                                      top=tops[str(2)],
+                                      height=height)
+
+        # Close figure
+        plt.close(fig)
+
+        # Create intensity dependence of PCE figure
+        fig = plt.figure(figsize=(A4_width / 2, A4_height / 2), dpi=300)
+        ax = fig.add_subplot(1, 1, 1)
+        ax.scatter(group_HL['Intensity'] * 100,
+                   group_HL['PCE'],
+                   c='blue',
+                   label='H->L')
+        ax.scatter(group_LH['Intensity'] * 100,
+                   group_LH['PCE'],
+                   c='red',
+                   label='L->H')
+        ax.legend(loc='best', scatterpoints=1)
+        ax.set_xlabel('Light intensity (mW/cm^2)')
+        ax.set_ylabel('PCE (%)')
+        ax.set_xlim([0, np.max(group_HL['Intensity'] * 100) * 1.05])
+
+        # Format the figure layout, save to file, and add to ppt
+        image_path = image_folder + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '_pce_intdep.png'
+        fig.tight_layout()
+        fig.savefig(image_path)
+        data_slide.shapes.add_picture(image_path,
+                                      left=lefts[str(3)],
+                                      top=tops[str(3)],
+                                      height=height)
+
+        # Close figure
+        plt.close(fig)
+
+# Plot intensity dependent JV curves
     i = 0
-    i_max = len(group_by_label_pixel_HL) - 1
-    j = 0
     for ng_HL, ng_LH in zip(group_by_label_pixel_HL, group_by_label_pixel_LH):
+
+        # Unpack group name and data
         name_HL = ng_HL[0]
         group_HL = ng_HL[1]
         name_LH = ng_LH[0]
         group_LH = ng_LH[1]
+
+        # Get label, variable, value, and pixel for title and image path
         label = group_HL['Label'].unique()[0]
         variable = group_HL['Variable'].unique()[0]
         value = group_HL['Value'].unique()[0]
         pixel = group_HL['Pixel'].unique()[0]
+
+        # Find maximum Jsc of the group for y-axis limits and number of
+        # JV curves for division of the colormap for the curves
         jsc_max = max(max(group_HL['Jsc']), max(group_LH['Jsc']))
         c_div = 1 / len(group_HL)
+
+        # Start a new slide after every 4th figure
         if i % 4 == 0:
-            plt.figure(figsize=(A4_width, A4_height), dpi=300)
-            plt.suptitle('Intensity dependent JV curves',
-                         fontsize=10,
-                         fontweight='bold')
-            j += 1
-        plt.subplot(2, 2, (i % 4) + 1)
-        k = 0
+            data_slide = rgl.title_image_slide(
+                prs, 'Intensity dependent JV curves, page ' + str(int(i / 4)))
+
+# Create figure, axes, y=0 line, and title
+        fig = plt.figure(figsize=(A4_width / 2, A4_height / 2), dpi=300)
+        ax = fig.add_subplot(1, 1, 1)
+        ax.axhline(0, lw=0.5, c='black')
+        ax.set_title(str(label) + ', pixel ' + str(pixel) + ', ' + str(
+            variable) + ', ' + str(value))
+
+        # Open data files and plot a JV curve on the same axes for each scan
+        j = 0
         for path_HL, path_LH, intensity_HL, intensity_LH in zip(
                 group_HL['File_Path'], group_LH['File_Path'],
                 group_HL['Intensity'], group_LH['Intensity']):
+
             data_HL = np.genfromtxt(path_HL, delimiter='\t')
             data_LH = np.genfromtxt(path_LH, delimiter='\t')
             data_HL = data_HL[~np.isnan(data_HL).any(axis=1)]
             data_LH = data_LH[~np.isnan(data_LH).any(axis=1)]
-            plt.plot(data_HL[:, 0],
-                     data_HL[:, 1],
-                     c=cmap(k * c_div),
-                     label=str(round(intensity_HL * 100, 1)) + ' W/cm^2')
-            plt.plot(data_LH[:, 0], data_LH[:, 1], c=cmap(k * c_div))
-            k += 1
-        plt.legend(loc='best', fontsize=7)
-        plt.xlabel('Applied voltage (V)', fontsize=9)
-        plt.ylabel('J (mA/cm^2)', fontsize=9)
-        plt.ylim([-jsc_max * 1.05, jsc_max * 1.05])
-        plt.title(
-            str(label) + ', pixel ' + str(pixel) + ', ' + str(variable) + ', '
-            + str(value),
-            fontsize=8)
-        if (i % 4 == 3) or (i == i_max):
-            plt.tight_layout()
-            plt.subplots_adjust(top=0.92)
-            image_path = log_file_jv.replace(
-                '.txt', '_intensity_JV_' + str(j) + '.png')
-            plt.savefig(image_path)
-            images.append(image_path)
-            pp.savefig()
+
+            ax.plot(data_HL[:, 0],
+                    data_HL[:, 1],
+                    c=cmap(j * c_div),
+                    label=str(round(intensity_HL * 100, 1)) + ' mW/cm^2')
+            ax.plot(data_LH[:, 0], data_LH[:, 1], c=cmap(j * c_div))
+
+            j += 1
+
+# Format axes
+        ax.set_xlabel('Applied voltage (V)')
+        ax.set_ylabel('J (mA/cm^2)')
+        ax.set_xlim([np.min(data_LH[:, 0]), np.max(data_LH[:, 0])])
+        ax.set_ylim([-jsc_max * 1.05, jsc_max * 1.05])
+
+        # Adjust plot width to add legend outside plot area
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.7, box.height])
+        handles, labels = ax.get_legend_handles_labels()
+        lgd = ax.legend(handles,
+                        labels,
+                        loc='upper left',
+                        bbox_to_anchor=(1, 1),
+                        prop={'size': 9})
+
+        # Format the figure layout, save to file, and add to ppt
+        image_path = image_folder + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '_intdep_JV.png'
+        fig.savefig(image_path,
+                    bbox_extra_artists=(lgd, ),
+                    bbox_inches='tight')
+        data_slide.shapes.add_picture(image_path,
+                                      left=lefts[str(i % 4)],
+                                      top=tops[str(i % 4)],
+                                      height=height)
+
+        # Close figure
+        plt.close(fig)
+
         i += 1
 
 # Plot eqe graphs if experiment data exists
@@ -1214,6 +1147,8 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
                        names=['Label', 'Pixel', 'Variable', 'Value',
                               'Position', 'Int_Jsc', 'Mismatch', 'Area',
                               'Frequency', 'File_Path'])
+
+    # Sort, filter, and group data
     sorted_data_eqe = data.sort_values(
         ['Variable', 'Value', 'Label', 'Pixel', 'Int_Jsc'],
         ascending=[True, True, True, True, False])
@@ -1232,84 +1167,128 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
     sorted_data_eqe_LH['SS_Jsc'] = list(filtered_data_LH_temp['Jsc'])
     grouped_by_label = sorted_data_eqe.groupby(['Label'])
 
+    # Plot EQE graphs with all pixels on the same device on the same plot
     i = 0
-    i_max = len(sorted_data_eqe.drop_duplicates(['Label'])) - 1
-    j = 0
     for name, group in grouped_by_label:
+
+        # Get label, variable, and value for title and image path
         label = group['Label'].unique()[0]
         variable = group['Variable'].unique()[0]
         value = group['Value'].unique()[0]
+
+        # Get colormap increment
         c_div = 1 / len(group)
 
+        # Start a new slide after every 4th figure
         if i % 4 == 0:
-            plt.figure(figsize=(A4_width, A4_height), dpi=300)
-            plt.suptitle('External quantum efficiency',
-                         fontsize=10,
-                         fontweight='bold')
-            j += 1
-        plt.subplot(2, 2, (i % 4) + 1)
-        k = 0
+            data_slide = rgl.title_image_slide(
+                prs, 'External quantum efficiency, page ' + str(int(i / 4)))
+
+# Create figure, axes, and title
+        fig = plt.figure(figsize=(A4_width / 2, A4_height / 2), dpi=300)
+        ax = fig.add_subplot(1, 1, 1)
+        ax.set_title(str(label) + ', ' + str(variable) + ', ' + str(value))
+
+        # Plot EQE spectra for each pixel on same plot
+        j = 0
         for path, pixel in zip(group['File_Path'], group['Pixel']):
             data = np.genfromtxt(path, delimiter='\t')
-            plt.plot(data[:, 0],
-                     data[:, 1],
-                     c=cmap(k * c_div),
-                     label=str(pixel))
-            k += 1
-        plt.legend(loc='lower center', fontsize=7)
-        plt.xlabel('Wavelength (nm)', fontsize=9)
-        plt.ylabel('EQE (%)', fontsize=9)
-        plt.xlim([np.min(data[:, 0]), np.max(data[:, 0])])
-        plt.ylim([0, 100])
-        plt.title(
-            str(label) + ', ' + str(variable) + ', ' + str(value),
-            fontsize=8)
-        if (i % 4 == 3) or (i == i_max):
-            plt.tight_layout()
-            plt.subplots_adjust(top=0.92)
-            image_path = log_file_jv.replace('.txt', '_EQE_' + str(j) + '.png')
-            plt.savefig(image_path)
-            images.append(image_path)
-            pp.savefig()
+            ax.plot(data[:, 0],
+                    data[:, 1],
+                    c=cmap(j * c_div),
+                    label=str(pixel))
+            j += 1
+
+# Format axes
+        ax.legend(loc='best')
+        ax.set_xlabel('Wavelength (nm)')
+        ax.set_ylabel('EQE (%)')
+        ax.set_xlim([np.min(data[:, 0]), np.max(data[:, 0])])
+        ax.set_ylim([0, 100])
+
+        # Format the figure layout, save to file, and add to ppt
+        image_path = image_folder + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_EQE.png'
+        fig.tight_layout()
+        fig.savefig(image_path)
+        data_slide.shapes.add_picture(image_path,
+                                      left=lefts[str(i % 4)],
+                                      top=tops[str(i % 4)],
+                                      height=height)
+
+        # Clear figures from memory
+        plt.close(fig)
+
         i += 1
 
-# Plot graph of measured Jsc against integrated Jsc
+# Create markers and colours for measured Jsc against integrated Jsc
     marker = itertools.cycle((',', 'D', 'x', 'o', '*', '^'))
     color = itertools.cycle(
         ('black', 'blue', 'red', 'green', 'purple', 'magenta', 'cyan'))
 
-    plt.figure(figsize=(A4_width, A4_height), dpi=300)
-    plt.suptitle('Measured vs. Integrated Jsc', fontsize=10, fontweight='bold')
+    # Create ppt for measured vs. integrated Jsc scatter plot
+    data_slide = rgl.title_image_slide(prs, 'Measured vs. Integrated Jsc')
+
+    # Create figure and axes
+    fig = plt.figure(figsize=(A4_width, A4_height), dpi=300)
+    ax = fig.add_subplot(1, 1, 1)
+
+    # Zip data to be unpacked in loop
     zipped = zip(sorted_data_eqe_HL['Label'], sorted_data_eqe_HL['Pixel'],
                  sorted_data_eqe_HL['SS_Jsc'], sorted_data_eqe_HL['Int_Jsc'],
                  sorted_data_eqe_LH['Label'], sorted_data_eqe_LH['Pixel'],
                  sorted_data_eqe_LH['SS_Jsc'], sorted_data_eqe_LH['Int_Jsc'])
+
+    # Add 1 point for every measured-integrated pair per iteration
     for label_HL, pixel_HL, ss_jsc_HL, int_jsc_HL, label_LH, pixel_LH, ss_jsc_LH, int_jsc_LH in zipped:
-        plt.scatter(
+        ax.scatter(
             ss_jsc_HL,
             int_jsc_HL,
             label=(str(label_HL) + ', pixel ' + str(pixel_HL) + ', H->L'),
             marker=next(marker),
             s=30,
             c=next(color))
-        plt.scatter(
+        ax.scatter(
             ss_jsc_LH,
             int_jsc_LH,
             label=(str(label_LH) + ', pixel ' + str(pixel_LH) + ', L->H'),
             marker=next(marker),
             s=30,
             c=next(color))
-    plt.plot(sorted_data_eqe_HL['SS_Jsc'],
-             sorted_data_eqe_HL['SS_Jsc'],
-             c='black',
-             label='Int Jsc = SS Jsc')
-    plt.legend(loc='upper left', scatterpoints=1, fontsize=9)
-    plt.xlabel('Solar simulator Jsc (mA/cm^2)', fontsize=9)
-    plt.ylabel('Integrated Jsc from EQE (mA/cm^2)', fontsize=9)
-    image_path = log_file_jv.replace('.txt', '_EQE_Jscs' + '.png')
-    plt.savefig(image_path)
-    images.append(image_path)
-    pp.savefig()
+
+# Plot line to indicate where measured Jsc = integrated Jsc
+    ax.plot(sorted_data_eqe_HL['SS_Jsc'],
+            sorted_data_eqe_HL['SS_Jsc'],
+            c='black',
+            label='Int Jsc = SS Jsc')
+
+    # Format axes
+    ax.set_xlabel('Solar simulator Jsc (mA/cm^2)')
+    ax.set_ylabel('Integrated Jsc from EQE (mA/cm^2)')
+
+    # Adjust plot width to add legend outside plot area
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    handles, labels = ax.get_legend_handles_labels()
+    lgd = ax.legend(handles,
+                    labels,
+                    loc='upper left',
+                    bbox_to_anchor=(1.01, 1),
+                    scatterpoints=1,
+                    prop={'size': 9})
+
+    # Format the figure layout, save to file, and add to ppt
+    image_path = image_folder + 'SS-int_jscs.png'
+    fig.savefig(image_path,
+                bbox_extra_artists=(lgd, ),
+                bbox_inches='tight')
+    data_slide.shapes.add_picture(image_path,
+                                  left=lefts[str(0)],
+                                  top=tops[str(0)],
+                                  height=height * 2)
+
+    # Close figure
+    plt.close(fig)
 
 # Get weather data and add to dataframe
 weather_data_path = r'C:/SolarSimData/WeatherData/WxLog.csv'
@@ -1327,11 +1306,14 @@ weather_data = pd.read_csv(
 one_week_ago = date.today() - timedelta(days=7)
 weather_data = weather_data.loc[weather_data.Date_time > one_week_ago]
 
-# Plot weather data and save images
+# Create new slide for weather report
+data_slide = rgl.title_image_slide(prs, 'Weather report for the last 7 days')
+
+# Create figure
 fig = plt.figure(figsize=(A4_width, A4_height), dpi=300)
-fig.suptitle('Weather report for last 7 days', fontsize=10, fontweight='bold')
-gs = gridspec.GridSpec(2, 1)
-ax1 = fig.add_subplot(gs[0, 0])
+
+# Add axes and data for temperature subplot then format
+ax1 = fig.add_subplot(2, 1, 1)
 ax1.plot_date(weather_data['Date_time'],
               weather_data['Lab T'],
               fmt='-',
@@ -1351,8 +1333,10 @@ ax1.plot_date(weather_data['Date_time'],
 ax1.set_xticklabels([])
 ax1.set_ylim([15, 30])
 ax1.legend(loc='best')
-ax1.set_ylabel('Temperature (C)', fontsize=8)
-ax2 = fig.add_subplot(gs[1, 0])
+ax1.set_ylabel('Temperature (C)')
+
+# Add axes and data for humidity subplot then format
+ax2 = fig.add_subplot(2, 1, 2)
 ax2.plot_date(weather_data['Date_time'],
               weather_data['Lab RH'],
               fmt='-',
@@ -1372,70 +1356,20 @@ ax2.plot_date(weather_data['Date_time'],
 ax2.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y %H:%M'))
 ax2.set_ylim([0, 100])
 ax2.legend(loc='best')
-ax2.set_ylabel('Relative humidity (%)', fontsize=8)
-plt.xticks(rotation='35', ha='right', fontsize=8)
-gs.update(wspace=0.3, hspace=0.05)
-image_path = log_file_jv.replace('.txt', '_weather_' + '.png')
-plt.savefig(image_path)
-images.append(image_path)
-pp.savefig()
+ax2.set_ylabel('Relative humidity (%)')
+plt.xticks(rotation='40', ha='right')
 
-# Close pdf of saved figures
-pp.close()
+# Format the figure layout, save to file, and add to ppt
+image_path = image_folder + 'weather_report.png'
+fig.tight_layout()
+fig.savefig(image_path)
+data_slide.shapes.add_picture(image_path,
+                              left=lefts[str(0)],
+                              top=tops[str(0)],
+                              height=height * 2)
 
-# Create a powerpoint presentation to add figures to
-prs = Presentation()
-
-# Add title page with experiment title, date, and username
-title_slide_layout = prs.slide_layouts[0]
-slide = prs.slides.add_slide(title_slide_layout)
-title = slide.shapes.title
-subtitle = slide.placeholders[1]
-title.text = experiment_title
-subtitle.text = exp_date + ', ' + username
-
-# Add slide with table for manual completion of experimental details
-blank_slide_layout = prs.slide_layouts[6]
-slide = prs.slides.add_slide(blank_slide_layout)
-shapes = slide.shapes
-rows = 17
-cols = 6
-left = Inches(0.15)
-top = Inches(0.02)
-width = prs.slide_width - Inches(0.25)
-height = prs.slide_height - Inches(0.05)
-table = shapes.add_table(rows, cols, left, top, width, height).table
-
-# set column widths
-table.columns[0].width = Inches(0.8)
-table.columns[1].width = Inches(1.2)
-table.columns[2].width = Inches(2.0)
-table.columns[3].width = Inches(2.0)
-table.columns[4].width = Inches(2.0)
-table.columns[5].width = Inches(1.7)
-
-# write column headings
-table.cell(0, 0).text = 'Label'
-table.cell(0, 1).text = 'Substrate'
-table.cell(0, 2).text = 'Bottom contact'
-table.cell(0, 3).text = 'Perovskite'
-table.cell(0, 4).text = 'Top contact'
-table.cell(0, 5).text = 'Top electrode'
-
-# fill in label column
-i = 1
-for item in sorted(sorted_data['Label'].unique()):
-    table.cell(i, 0).text = str(item)
-    i += 1
-
-# Add images to blank slides
-blank_slide_layout = prs.slide_layouts[6]
-height = prs.slide_height
-width = prs.slide_width
-left = top = Inches(0)
-for image in images:
-    slide = prs.slides.add_slide(blank_slide_layout)
-    slide.shapes.add_picture(image, left, top, height=height)
+# Close figure
+plt.close(fig)
 
 # Save powerpoint presentation
-prs.save(log_file_jv.replace('.txt', '_summary.pptx'))
+prs.save(analysis_folder + filepath_jv.strip('LOG.txt') + 'summary.pptx')
