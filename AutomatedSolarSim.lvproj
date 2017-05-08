@@ -46,6 +46,7 @@
 		<Item Name="Keithley J-t IIT_v2.vi" Type="VI" URL="../SubVIs/Keithley J-t IIT_v2.vi"/>
 		<Item Name="Lamp_power_control.vi" Type="VI" URL="../../J-V Measurement/Prelim/Lamp_power_control.vi"/>
 		<Item Name="Load saved scan settings_arbitray cluster elements.vi" Type="VI" URL="../SubVIs/Load saved scan settings_arbitray cluster elements.vi"/>
+		<Item Name="Login_dialog.vi" Type="VI" URL="../SubVIs/Login_dialog.vi"/>
 		<Item Name="Measure EQE.vi" Type="VI" URL="../SubVIs/Measure EQE.vi"/>
 		<Item Name="Measure EQE_v2.vi" Type="VI" URL="../SubVIs/Measure EQE_v2.vi"/>
 		<Item Name="Measure Intensity Dep.vi" Type="VI" URL="../SubVIs/Measure Intensity Dep.vi"/>
