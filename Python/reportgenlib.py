@@ -70,8 +70,8 @@ def extra_JV_analysis(filepath, Jsc, Vmp, Voc, Area):
     else:
         Voc_i = np.where(V == -Voc)
 
-    # Convert current density (in mA/cm^2) to current (in A) for diode
-    # equivalent circuit fitting
+# Convert current density (in mA/cm^2) to current (in A) for diode
+# equivalent circuit fitting
     I = JV[:, 1] * Area / 1000
     IV = np.column_stack((JV[:, 0], I))
 

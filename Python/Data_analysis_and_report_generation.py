@@ -328,7 +328,7 @@ for i in range(len(boxplotdata_HL['var_names'])):
             prs, boxplotdata_HL['var_names'][i] + ' basic parameters')
         params = ['Jsc', 'Voc', 'FF', 'PCE']
         for ix, p in enumerate(params):
-            image_path = image_folder + p + '_box2.png'
+            image_path = image_folder + 'boxplot_' + p + '.png'
             rgl.create_save_boxplot(p, boxplotdata_HL, boxplotdata_LH, i, x,
                                     image_path)
             data_slide.shapes.add_picture(image_path,
@@ -344,15 +344,15 @@ for i in range(len(boxplotdata_HL['var_names'])):
         params = ['Rs', 'Rsh', 'yields_var', 'yields_var_lab']
         for ix, p in enumerate(params):
             if p.find('yield') == -1:
-                image_path = image_folder + p + '_box2.png'
+                image_path = image_folder + 'boxplot_' + p + '.png'
                 rgl.create_save_boxplot(p, boxplotdata_HL, boxplotdata_LH, i,
                                         x, image_path)
             elif p == 'yields_var':
-                image_path = image_folder + p + '_bar.png'
+                image_path = image_folder + 'barchart_' + p + '.png'
                 rgl.create_save_barchart(yields_var, names_yield_var, i,
                                          image_path)
             elif p == 'yields_var_lab':
-                image_path = image_folder + p + '_bar.png'
+                image_path = image_folder + 'barchart_' + p + '.png'
                 rgl.create_save_barchart(yields_var_lab, names_yield_var_lab,
                                          i, image_path)
             data_slide.shapes.add_picture(image_path,
@@ -434,7 +434,7 @@ for name, group in grouped_by_label:
     lgd = ax.legend(handles, labels, loc='upper left', bbox_to_anchor=(1, 1))
 
     # Format the figure layout, save to file, and add to ppt
-    image_path = image_folder + str(labels[i]) + '_all_JVs.png'
+    image_path = image_folder + 'jv_all_' + str(labels[i]) + '.png'
     fig.savefig(image_path, bbox_extra_artists=(lgd, ), bbox_inches='tight')
     data_slide.shapes.add_picture(image_path,
                                   left=lefts[str(i % 4)],
@@ -546,8 +546,8 @@ for file in best_pixels['File_Path']:
     ax.legend(loc='best')
 
     # Format the figure layout, save to file, and add to ppt
-    image_path = image_folder + str(variables[i]) + '_' + str(variables[
-        i]) + '_best_JV.png'
+    image_path = image_folder + 'jv_best_' + str(variables[i]) + '_' + str(
+        variables[i]) + '.png'
     fig.tight_layout()
     fig.savefig(image_path)
     data_slide.shapes.add_picture(image_path,
@@ -655,9 +655,8 @@ for iHL, iLH in zip(group_by_label_pixel_HL.indices,
                         bbox_to_anchor=(1, 1))
 
         # Format the figure layout, save to file, and add to ppt
-        image_path = image_folder + str(label) + '_' + str(
-            variable) + '_' + str(value) + '_' + str(
-                pixel) + '_repeat_scan_JV.png'
+        image_path = image_folder + 'jv_repeats_' + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '.png'
         fig.savefig(image_path, bbox_extra_artists=(lgd), bbox_inches='tight')
         data_slide.shapes.add_picture(image_path,
                                       left=lefts[str(i % 4)],
@@ -736,8 +735,8 @@ if time_files['exists']:
         ax2.set_xlabel('Time (s)')
 
         # Format the figure layout, save to file, and add to ppt
-        image_path = image_folder + str(label) + '_' + str(
-            variable) + '_' + str(value) + '_' + str(pixel) + '_Jt.png'
+        image_path = image_folder + 'jt_' + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '.png'
         fig.tight_layout()
         fig.savefig(image_path)
         data_slide.shapes.add_picture(image_path,
@@ -819,8 +818,8 @@ if maxp_files['exists']:
         ax3.locator_params(axis='y', tight=False, nbins=4)
 
         # Format the figure layout, save to file, and add to ppt
-        image_path = image_folder + str(label) + '_' + str(
-            variable) + '_' + str(value) + '_' + str(pixel) + '_mppt.png'
+        image_path = image_folder + 'mppt_' + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '.png'
         fig.tight_layout()
         fig.subplots_adjust(hspace=0.05)
         fig.savefig(image_path)
@@ -921,8 +920,8 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
         ax.set_xlim([0, np.max(group_HL['Intensity'] * 100) * 1.05])
 
         # Format the figure layout, save to file, and add to ppt
-        image_path = image_folder + str(label) + '_' + str(
-            variable) + '_' + str(value) + '_' + str(pixel) + '_jsc_intdep.png'
+        image_path = image_folder + 'intensity_jsc_' + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '.png'
         fig.tight_layout()
         fig.savefig(image_path)
         data_slide.shapes.add_picture(image_path,
@@ -984,8 +983,8 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
             [np.min(group_HL['Voc']) * 0.95, np.max(group_HL['Voc']) * 1.05])
 
         # Format the figure layout, save to file, and add to ppt
-        image_path = image_folder + str(label) + '_' + str(
-            variable) + '_' + str(value) + '_' + str(pixel) + '_voc_intdep.png'
+        image_path = image_folder + 'intensity_voc_' + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '.png'
         fig.tight_layout()
         fig.savefig(image_path)
         data_slide.shapes.add_picture(image_path,
@@ -1013,8 +1012,8 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
         ax.set_xlim([0, np.max(group_HL['Intensity'] * 100) * 1.05])
 
         # Format the figure layout, save to file, and add to ppt
-        image_path = image_folder + str(label) + '_' + str(
-            variable) + '_' + str(value) + '_' + str(pixel) + '_ff_intdep.png'
+        image_path = image_folder + 'intensity_ff_' + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '.png'
         fig.tight_layout()
         fig.savefig(image_path)
         data_slide.shapes.add_picture(image_path,
@@ -1042,8 +1041,8 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
         ax.set_xlim([0, np.max(group_HL['Intensity'] * 100) * 1.05])
 
         # Format the figure layout, save to file, and add to ppt
-        image_path = image_folder + str(label) + '_' + str(
-            variable) + '_' + str(value) + '_' + str(pixel) + '_pce_intdep.png'
+        image_path = image_folder + 'intensity_pce_' + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '.png'
         fig.tight_layout()
         fig.savefig(image_path)
         data_slide.shapes.add_picture(image_path,
@@ -1123,8 +1122,8 @@ if os.path.exists(folderpath + folderpath_intensity + filepath_jv):
                         prop={'size': 9})
 
         # Format the figure layout, save to file, and add to ppt
-        image_path = image_folder + str(label) + '_' + str(
-            variable) + '_' + str(value) + '_' + str(pixel) + '_intdep_JV.png'
+        image_path = image_folder + 'jv_intensity_' + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_' + str(pixel) + '.png'
         fig.savefig(image_path,
                     bbox_extra_artists=(lgd, ),
                     bbox_inches='tight')
@@ -1206,8 +1205,8 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
         ax.set_ylim([0, 100])
 
         # Format the figure layout, save to file, and add to ppt
-        image_path = image_folder + str(label) + '_' + str(
-            variable) + '_' + str(value) + '_EQE.png'
+        image_path = image_folder + 'eqe_' + str(label) + '_' + str(
+            variable) + '_' + str(value) + '.png'
         fig.tight_layout()
         fig.savefig(image_path)
         data_slide.shapes.add_picture(image_path,
@@ -1220,8 +1219,8 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
 
         i += 1
 
-    # Plot spectral responsivity graphs with all pixels on the same device on
-    # the same plot
+# Plot spectral responsivity graphs with all pixels on the same device on
+# the same plot
     i = 0
     for name, group in grouped_by_label:
 
@@ -1261,8 +1260,8 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
         ax.set_ylim([0, np.max(data[:, 0]) * 1e-9 * q / (h * c)])
 
         # Format the figure layout, save to file, and add to ppt
-        image_path = image_folder + str(label) + '_' + str(
-            variable) + '_' + str(value) + '_responsivity.png'
+        image_path = image_folder + 'responsivity_' + str(label) + '_' + str(
+            variable) + '_' + str(value) + '.png'
         fig.tight_layout()
         fig.savefig(image_path)
         data_slide.shapes.add_picture(image_path,
@@ -1332,7 +1331,7 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
                     prop={'size': 9})
 
     # Format the figure layout, save to file, and add to ppt
-    image_path = image_folder + 'SS-int_jscs.png'
+    image_path = image_folder + 'eqe_integrated_vs_ss' + '.png'
     fig.savefig(image_path, bbox_extra_artists=(lgd, ), bbox_inches='tight')
     data_slide.shapes.add_picture(image_path,
                                   left=lefts[str(0)],
