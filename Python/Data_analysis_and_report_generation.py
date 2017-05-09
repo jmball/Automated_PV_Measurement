@@ -156,7 +156,6 @@ tops = {'0': prs.slide_height * 0.05,
         '2': prs.slide_height - height,
         '3': prs.slide_height - height}
 
-
 # Use the extra analysis function to perform extra analysis and create new
 # series for the dataframe
 Rs_grad = []
@@ -1221,6 +1220,61 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
 
         i += 1
 
+    # Plot spectral responsivity graphs with all pixels on the same device on
+    # the same plot
+    i = 0
+    for name, group in grouped_by_label:
+
+        # Get label, variable, and value for title and image path
+        label = group['Label'].unique()[0]
+        variable = group['Variable'].unique()[0]
+        value = group['Value'].unique()[0]
+
+        # Get colormap increment
+        c_div = 1 / len(group)
+
+        # Start a new slide after every 4th figure
+        if i % 4 == 0:
+            data_slide = rgl.title_image_slide(
+                prs, 'Spectral responsivity, page ' + str(int(i / 4)))
+
+# Create figure, axes, and title
+        fig = plt.figure(figsize=(A4_width / 2, A4_height / 2), dpi=300)
+        ax = fig.add_subplot(1, 1, 1)
+        ax.set_title(str(label) + ', ' + str(variable) + ', ' + str(value))
+
+        # Plot EQE spectra for each pixel on same plot
+        j = 0
+        for path, pixel in zip(group['File_Path'], group['Pixel']):
+            data = np.genfromtxt(path, delimiter='\t')
+            ax.plot(data[:, 0],
+                    data[:, 1] * data[:, 0] * 1e-9 * q / (100 * h * c),
+                    c=cmap(j * c_div),
+                    label=str(pixel))
+            j += 1
+
+# Format axes
+        ax.legend(loc='best')
+        ax.set_xlabel('Wavelength (nm)')
+        ax.set_ylabel('Responsivity (A/W)')
+        ax.set_xlim([np.min(data[:, 0]), np.max(data[:, 0])])
+        ax.set_ylim([0, np.max(data[:, 0]) * 1e-9 * q / (h * c)])
+
+        # Format the figure layout, save to file, and add to ppt
+        image_path = image_folder + str(label) + '_' + str(
+            variable) + '_' + str(value) + '_responsivity.png'
+        fig.tight_layout()
+        fig.savefig(image_path)
+        data_slide.shapes.add_picture(image_path,
+                                      left=lefts[str(i % 4)],
+                                      top=tops[str(i % 4)],
+                                      height=height)
+
+        # Clear figures from memory
+        plt.close(fig)
+
+        i += 1
+
 # Create markers and colours for measured Jsc against integrated Jsc
     marker = itertools.cycle((',', 'D', 'x', 'o', '*', '^'))
     color = itertools.cycle(
@@ -1279,9 +1333,7 @@ if os.path.exists(folderpath + folderpath_eqe + filepath_eqe):
 
     # Format the figure layout, save to file, and add to ppt
     image_path = image_folder + 'SS-int_jscs.png'
-    fig.savefig(image_path,
-                bbox_extra_artists=(lgd, ),
-                bbox_inches='tight')
+    fig.savefig(image_path, bbox_extra_artists=(lgd, ), bbox_inches='tight')
     data_slide.shapes.add_picture(image_path,
                                   left=lefts[str(0)],
                                   top=tops[str(0)],
