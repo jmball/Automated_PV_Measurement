@@ -378,6 +378,14 @@ def create_save_boxplot(
     fig.tight_layout()
     fig.savefig(image_path)
 
+    # np.savetxt(
+    #     image_path.strip('.png') + '_HL.txt',
+    #     np.transpose(boxplotdata_HL[p][index]),
+    #     header='\t'.join(boxplotdata_HL['names_var'][index]),
+    #     comments='',
+    #     newline='\r\n',
+    #     delimiter='\t')
+
 
 def create_save_barchart(yields, names, index, image_path, title=None):
     """
